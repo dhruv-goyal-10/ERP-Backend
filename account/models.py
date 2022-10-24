@@ -1,3 +1,4 @@
+from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.contrib.auth.models import BaseUserManager,AbstractBaseUser
 
@@ -53,7 +54,7 @@ class User(AbstractBaseUser):
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
   is_admin = models.BooleanField(default=False)
-
+  otp = models.CharField(max_length=4, null=True, blank=True)
   objects = UserManager()
 
   USERNAME_FIELD = 'userID'

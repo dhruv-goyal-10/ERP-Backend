@@ -7,3 +7,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
     fields = ['userID','password']
+
+
+class SendOTPSerializer(serializers.ModelSerializer):
+  userID = serializers.IntegerField()
+  class Meta:
+    model = User
+    fields = ['userID','email']
