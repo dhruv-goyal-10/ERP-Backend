@@ -42,6 +42,7 @@ class SendOTPView(APIView):
     serializer=SendOTPSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
+    email=email.lower()
     try:
       email=User.objects.get(email=email)
     except:
@@ -64,10 +65,10 @@ class VerifyOTPView(APIView):
     try:
       int(enteredOTP)
       if enteredOTP==generatedOTP:
-        user.otp="0000"
+        user.otp="****"
         user.save()
         return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
       else:
         return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
-    except:
+    except ValueError :
         return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
