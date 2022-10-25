@@ -9,8 +9,8 @@ class UserLoginSerializer(serializers.ModelSerializer):
     fields = ['userID','password']
 
 
-class SendOTPSerializer(serializers.ModelSerializer):
-  userID = serializers.IntegerField()
+class SendOTPSerializer(serializers.Serializer):
+  email = serializers.EmailField(max_length=255)
   class Meta:
     model = User
-    fields = ['userID','email']
+    fields = ['email']

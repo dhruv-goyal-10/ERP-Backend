@@ -22,25 +22,16 @@ class UserLoginView(APIView):
 
 class SendOTPView(APIView):
 
-  bool=False
-
-  def get(self, request, format=None):
+  def post(self, request, format=None):
     serializer=SendOTPSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True) 
-    userID = serializer.data.get('userID')
+    serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     try:
-      user=User.objects.get(email=email)
-      email = user.email
-      self.bool=True
-      self.post(email)
-      self.bool=False
-      return Response({'msg':'OTP SENT'}, status=status.HTTP_200_OK)
+      email=User.objects.get(email=email)
     except:
-      return Response({'errors':{'non_field_errors':['UserID or Email is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
-
-  def post(self, email):
-    if self.bool:
-      send_otp_via_email(email)
-    else:
-      pass 
+      return Response({'msg':'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
+    try:
+      EMAIL.send_otp_via_email(email)
+      return Response({'msg':'OTP SENT, CHECK YOUR EMAIL'}, status=status.HTTP_200_OK)
+    except:
+      return Response({'msg':'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
