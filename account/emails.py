@@ -13,7 +13,7 @@ class EMAIL:
             from_email = settings.EMAIL_HOST,
             to=[mailaddress]
         )
-        # email.send()
+        email.send()
         user = User.objects.get(email=mailaddress)
         user.otp = otp
         user.save()

@@ -32,7 +32,7 @@ class SendOTPView(APIView):
       return Response({'msg':'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
     try:
       EMAIL.send_otp_via_email(email)
-      return Response({'msg':'OTP SENT, CHECK YOUR EMAIL'}, status=status.HTTP_200_OK)
+      return Response({'msg':'OTP SENT TO USER '+str(email.userID)}, status=status.HTTP_200_OK)
     except:
       return Response({'msg':'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -48,8 +48,10 @@ class VerifyOTPView(APIView):
     try:
       int(enteredOTP)
       if enteredOTP==generatedOTP:
+        user.otp="0000"
+        user.save()
         return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
       else:
-        return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_200_OK)
+        return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
     except:
-        return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_200_OK)
+        return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
