@@ -35,3 +35,21 @@ class SendOTPView(APIView):
       return Response({'msg':'OTP SENT, CHECK YOUR EMAIL'}, status=status.HTTP_200_OK)
     except:
       return Response({'msg':'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class VerifyOTPView(APIView):
+  
+  def post(self, request, ID):
+    serializer=VerifyOTPSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    enteredOTP = serializer.data.get('otp')
+    user=User.objects.get(userID=ID)
+    generatedOTP = (user).otp
+    try:
+      int(enteredOTP)
+      if enteredOTP==generatedOTP:
+        return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
+      else:
+        return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_200_OK)
+    except:
+        return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_200_OK)

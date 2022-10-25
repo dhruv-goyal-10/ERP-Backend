@@ -14,3 +14,11 @@ class SendOTPSerializer(serializers.Serializer):
   class Meta:
     model = User
     fields = ['email']
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+  otp = serializers.CharField(min_length=4, max_length=4)
+
+  class Meta:
+    model = User
+    fields = ['otp']
