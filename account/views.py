@@ -67,7 +67,6 @@ class VerifyOTPView(APIView):
     try:
       int(enteredOTP)
       if enteredOTP==generatedOTP:
-        user.save()
         return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
       else:
         return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
@@ -86,12 +85,12 @@ class ChangePasswordView(APIView):
     user=User.objects.get(email = email)
     password = serializer.data.get('password')
     confirmpassword = serializer.data.get('confirmpassword')
-    generatedOTP = (user).otp
+    generatedOTP = user.otp
     if enteredOTP==generatedOTP:
       if password==confirmpassword:
           user.set_password(password)
-          user.save()
           user.otp="****"
+          user.save()
           return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
       else:
         return Response({'msg':'Passwords do not match'}, status=status.HTTP_404_NOT_FOUND)
