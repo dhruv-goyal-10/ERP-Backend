@@ -72,3 +72,20 @@ class VerifyOTPView(APIView):
         return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
     except ValueError :
         return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ChangePasswordView(APIView):
+    
+  def post(self, request, ID):
+    serializer = ChangePasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user=User.objects.get(userID=ID)
+    password = serializer.data.get('password')
+    confirmpassword = serializer.data.get('confirmpassword')
+    if password==confirmpassword:
+        user.set_password(password)
+        user.save()
+        return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
+    else:
+      return Response({'msg':'Passwords do not match'}, status=status.HTTP_404_NOT_FOUND)
+        

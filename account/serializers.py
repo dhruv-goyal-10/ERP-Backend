@@ -11,14 +11,12 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 class SendOTPSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)
-  class Meta:
-    model = User
-    fields = ['email']
 
 
 class VerifyOTPSerializer(serializers.Serializer):
   otp = serializers.CharField(min_length=4, max_length=4)
 
-  class Meta:
-    model = User
-    fields = ['otp']
+
+class ChangePasswordSerializer(serializers.Serializer):
+  password = serializers.CharField(min_length=8, max_length=255)
+  confirmpassword = serializers.CharField(min_length=8, max_length=255)
