@@ -14,9 +14,12 @@ class SendOTPSerializer(serializers.Serializer):
 
 
 class VerifyOTPSerializer(serializers.Serializer):
+  email = serializers.EmailField(max_length=255)
   otp = serializers.CharField(min_length=4, max_length=4)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+  email = serializers.EmailField(max_length=255)
+  otp = serializers.CharField(min_length=4, max_length=4)
   password = serializers.CharField(min_length=8, max_length=255)
   confirmpassword = serializers.CharField(min_length=8, max_length=255)

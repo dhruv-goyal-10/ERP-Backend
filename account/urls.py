@@ -5,7 +5,7 @@ from account.views import *
 
 urlpatterns = [ 
     path('login/',UserLoginView.as_view(), name='login'),
-    path('resetpassword/',SendOTPView.as_view(), name='resetpassword'),
-    path('verifyotp/<str:ID>/',VerifyOTPView.as_view(), name='verifyotp'),
-    path('changepassword/<str:ID>/',ChangePasswordView.as_view(), name='changepassword')
+    path('sendotp/',SendOTPView.as_view(), name='sendotp'),
+    path('verifyotp/',VerifyOTPView.as_view(), name='verifyotp'),
+    path('changepassword/',ChangePasswordView.as_view(), name='changepassword')
 ]

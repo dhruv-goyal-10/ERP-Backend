@@ -38,7 +38,7 @@ class UserLoginView(APIView):
 
 class SendOTPView(APIView):
 
-  def post(self, request, format=None):
+  def post(self, request):
     serializer=SendOTPSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -49,23 +49,24 @@ class SendOTPView(APIView):
       return Response({'msg':'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
     try:
       EMAIL.send_otp_via_email(email)
-      return Response({'msg':'OTP SENT TO USER '+str(email.userID)}, status=status.HTTP_200_OK)
+      return Response({'msg':'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
     except:
       return Response({'msg':'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class VerifyOTPView(APIView):
   
-  def post(self, request, ID):
+  def post(self, request):
     serializer=VerifyOTPSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     enteredOTP = serializer.data.get('otp')
-    user=User.objects.get(userID=ID)
+    email = serializer.data.get('email')
+    email=email.lower()
+    user=User.objects.get(email=email)
     generatedOTP = (user).otp
     try:
       int(enteredOTP)
       if enteredOTP==generatedOTP:
-        user.otp="****"
         user.save()
         return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
       else:
@@ -76,16 +77,23 @@ class VerifyOTPView(APIView):
 
 class ChangePasswordView(APIView):
     
-  def post(self, request, ID):
+  def post(self, request):
     serializer = ChangePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user=User.objects.get(userID=ID)
+    enteredOTP = serializer.data.get('otp')
+    email = serializer.data.get('email')
+    email=email.lower()
+    user=User.objects.get(email = email)
     password = serializer.data.get('password')
     confirmpassword = serializer.data.get('confirmpassword')
-    if password==confirmpassword:
-        user.set_password(password)
-        user.save()
-        return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
+    generatedOTP = (user).otp
+    if enteredOTP==generatedOTP:
+      if password==confirmpassword:
+          user.set_password(password)
+          user.save()
+          user.otp="****"
+          return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
+      else:
+        return Response({'msg':'Passwords do not match'}, status=status.HTTP_404_NOT_FOUND)
     else:
-      return Response({'msg':'Passwords do not match'}, status=status.HTTP_404_NOT_FOUND)
-        
+      return Response({'msg':'AUTHORISATION FAILED !!'}, status=status.HTTP_200_OK)
