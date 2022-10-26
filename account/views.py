@@ -6,6 +6,8 @@ from account.serializers import *
 from account.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
+from datetime import timedelta
+from django.utils import timezone
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -15,7 +17,7 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
-# Create your views here.
+
 class UserLoginView(APIView):
   def post(self, request, format=None):
     serializer = UserLoginSerializer(data=request.data)
@@ -54,6 +56,20 @@ class SendOTPView(APIView):
       return Response({'msg':'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
 
 
+def matchotp(enteredOTP,generatedOTP,generatedTIME):
+  try:
+    int(enteredOTP)
+    if enteredOTP==generatedOTP:
+      if generatedTIME + timedelta(minutes=5) > timezone.now():
+        return 'matched'
+      else:
+        return 'expired'
+    else:
+      return 'notmatched'
+  except ValueError :
+    return 'invalid'
+
+
 class VerifyOTPView(APIView):
   
   def post(self, request):
@@ -64,14 +80,16 @@ class VerifyOTPView(APIView):
     email=email.lower()
     user=User.objects.get(email=email)
     generatedOTP = (user).otp
-    try:
-      int(enteredOTP)
-      if enteredOTP==generatedOTP:
-        return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
-      else:
-        return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
-    except ValueError :
-        return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
+    generatedTIME = user.otp_created_at
+    otpstatus=matchotp(enteredOTP,generatedOTP,generatedTIME)
+    if otpstatus=='matched':
+      return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
+    elif otpstatus=='notmatched':
+      return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
+    elif otpstatus=='expired':
+      return Response({'msg':'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
+    else:
+      return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ChangePasswordView(APIView):
@@ -86,13 +104,15 @@ class ChangePasswordView(APIView):
     password = serializer.data.get('password')
     confirmpassword = serializer.data.get('confirmpassword')
     generatedOTP = user.otp
-    if enteredOTP==generatedOTP:
+    generatedTIME = user.otp_created_at
+    otpstatus=matchotp(enteredOTP,generatedOTP,generatedTIME)
+    if otpstatus=='matched':
       if password==confirmpassword:
           user.set_password(password)
           user.otp="****"
           user.save()
           return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
-      else:
-        return Response({'msg':'Passwords do not match'}, status=status.HTTP_404_NOT_FOUND)
+    elif otpstatus=='expired':
+      return Response({'msg':'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_200_OK)
     else:
       return Response({'msg':'AUTHORISATION FAILED !!'}, status=status.HTTP_200_OK)

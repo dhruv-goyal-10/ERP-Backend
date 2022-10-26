@@ -1,5 +1,6 @@
 from django.core.mail import EmailMessage
 import random
+from django.utils import timezone
 from django.conf import settings
 from . models import User
 
@@ -16,4 +17,5 @@ class EMAIL:
         email.send()
         user = User.objects.get(email=mailaddress)
         user.otp = otp
+        user.otp_created_at = timezone.now()
         user.save()
