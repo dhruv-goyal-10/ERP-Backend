@@ -2,6 +2,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import random
+from django.utils import timezone
 from django.conf import settings
 from . models import User
 
@@ -24,4 +25,5 @@ class EMAIL:
         email.send()
         user = User.objects.get(email=mailaddress)
         user.otp = otp
+        user.otp_created_at = timezone.now()
         user.save()
