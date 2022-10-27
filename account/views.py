@@ -11,7 +11,6 @@ from django.utils import timezone
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
-
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -99,19 +98,56 @@ class ChangePasswordView(APIView):
     serializer.is_valid(raise_exception=True)
     enteredOTP = serializer.data.get('otp')
     email = serializer.data.get('email')
-    email=email.lower()
-    user=User.objects.get(email = email)
     password = serializer.data.get('password')
     confirmpassword = serializer.data.get('confirmpassword')
+
+    email=email.lower()
+    user=User.objects.get(email = email)
+
+    special_char= ['@', '#', '$', '%', '*', '&']
+    isSpecial_present = any(char in special_char for char in password)
+    isLower_present = any(char.islower() for char in password)
+    isUpper_present = any(char.isupper() for char in password)
+    isDigit_present = any(char.isdigit() for char in password)
+    isLength_ok = True if len(password)>=6 and len(password)<=20 else False
+
+    if not isSpecial_present:
+      context = {'msg':"Your Password doesn't contain any Special Character"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+
+    if not isLower_present:
+      context = {'msg':"Your Password doesn't contain any Lowercase Letter"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+    
+    if not isDigit_present:
+      context = {'msg':"Your Password doesn't contain any Numeric Digit"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+    
+    if not isUpper_present:
+      context = {'msg':"Your Password doesn't contain any Uppercase Letter"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+
+    if not isLength_ok:
+      context = {'msg':"Your Password doesn't meet the length requirements"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+    
     generatedOTP = user.otp
     generatedTIME = user.otp_created_at
     otpstatus=matchotp(enteredOTP,generatedOTP,generatedTIME)
     if otpstatus=='matched':
       if password==confirmpassword:
-          user.set_password(password)
-          user.otp="****"
-          user.save()
-          return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
+
+        checkUser = authenticate(userID=user.userID, password=password)
+        if checkUser is not None:
+          context = {'msg':'Password entered is same as old one'}
+          return Response(context, status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(password)
+        user.otp="****"
+        user.save()
+        return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
+      else:
+        return Response({'msg':"Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
     elif otpstatus=='expired':
       return Response({'msg':'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_200_OK)
     else:
