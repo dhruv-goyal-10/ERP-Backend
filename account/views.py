@@ -45,12 +45,15 @@ class SendOTPView(APIView):
     email = serializer.data.get('email')
     email=email.lower()
     try:
-      email=User.objects.get(email=email)
+      user=User.objects.get(email=email)
     except:
       return Response({'msg':'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
     try:
-      EMAIL.send_otp_via_email(email)
-      return Response({'msg':'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
+      if user.otp_created_at + timedelta(minutes=1) < timezone.now():
+        EMAIL.send_otp_via_email(email)
+        return Response({'msg':'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
+      else:
+        return Response({'msg':'WAIT FOR 1 minute before resending OTP'}, status=status.HTTP_404_NOT_FOUND)
     except:
       return Response({'msg':'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -86,6 +89,8 @@ class VerifyOTPView(APIView):
     elif otpstatus=='notmatched':
       return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
     elif otpstatus=='expired':
+      user.otp = "****"
+      user.save()
       return Response({'msg':'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
     else:
       return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
@@ -149,6 +154,8 @@ class ChangePasswordView(APIView):
       else:
         return Response({'msg':"Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
     elif otpstatus=='expired':
+      user.otp="****"
+      user.save()
       return Response({'msg':'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_200_OK)
     else:
       return Response({'msg':'AUTHORISATION FAILED !!'}, status=status.HTTP_200_OK)
