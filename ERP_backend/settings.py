@@ -134,6 +134,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://erp-edumate.herokuapp.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://edumate-erp.netlify.app",
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
