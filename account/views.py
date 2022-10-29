@@ -22,21 +22,17 @@ class UserLoginView(APIView):
     serializer.is_valid(raise_exception=True)
     userID = serializer.data.get('userID')
     password = serializer.data.get('password')
-    IN = userID//100000
-    print(IN)
     user = authenticate(userID=userID, password=password)
-    # print(user.id)
     if user is not None:
         token = get_tokens_for_user(user)
-        # token= 'kjdfkljdsq;lkfnkla'
-        if IN == 2:
+        if user.is_stu:
             return Response({'token': token,'msg':'Login Success - Student'}, status=status.HTTP_200_OK)
-        elif IN == 1:
+        elif user.is_tea:
             return Response({'token': token,'msg':'Login Success - Teacher'}, status=status.HTTP_200_OK)
-        elif IN == 9:
+        elif user.is_admin:
             return Response({'token': token,'msg':'Login Success - Admin'}, status=status.HTTP_200_OK)
     else:
-      return Response({'errors':{'non_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
+      return Response({'errors':{'non_field_errors':['UserID or Password is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
 
 
 class SendOTPView(APIView):
@@ -51,7 +47,6 @@ class SendOTPView(APIView):
     except:
       return Response({'msg':'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
     try:
-      print(user)
       if user.otp_created_at + timedelta(minutes=1) < timezone.now():
         EMAIL.send_otp_via_email(email)
         return Response({'msg':'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
@@ -160,6 +155,8 @@ class AddStudent(APIView):
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
+    password=password[0].upper()+password[1:]
+
     try:
       user= User.objects.get(userID=userID)
       if user is not None:
@@ -194,7 +191,6 @@ class AddStudent(APIView):
 
 
 class AddTeacher(APIView):
-
   def post(self, request):
     serializer = AddTeacherSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -204,7 +200,9 @@ class AddTeacher(APIView):
     DOB = serializer.data.get('DOB')
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
+
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
+    password=password[0].upper()+password[1:]
     try:
       user= User.objects.get(userID=userID)
       if user is not None:
