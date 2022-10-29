@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from account.serializers import *
-from account.models import User, Student
+from account.models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
@@ -119,24 +119,8 @@ class ChangePasswordView(APIView):
     isDigit_present = any(char.isdigit() for char in password)
     isLength_ok = True if len(password)>=6 and len(password)<=20 else False
 
-    if not isSpecial_present:
-      context = {'msg':"Your Password doesn't contain any Special Character"}
-      return Response(context, status.HTTP_400_BAD_REQUEST)
-
-    if not isLower_present:
-      context = {'msg':"Your Password doesn't contain any Lowercase Letter"}
-      return Response(context, status.HTTP_400_BAD_REQUEST)
-    
-    if not isDigit_present:
-      context = {'msg':"Your Password doesn't contain any Numeric Digit"}
-      return Response(context, status.HTTP_400_BAD_REQUEST)
-    
-    if not isUpper_present:
-      context = {'msg':"Your Password doesn't contain any Uppercase Letter"}
-      return Response(context, status.HTTP_400_BAD_REQUEST)
-
-    if not isLength_ok:
-      context = {'msg':"Your Password doesn't meet the length requirements"}
+    if not (isSpecial_present and isLower_present and isDigit_present and isUpper_present and isLength_ok):
+      context = {'msg':"Your Password must satisfy given conditions"}
       return Response(context, status.HTTP_400_BAD_REQUEST)
     
     generatedOTP = user.otp
@@ -179,14 +163,14 @@ class AddStudent(APIView):
     try:
       user= User.objects.get(userID=userID)
       if user is not None:
-        return Response({'msg':'User with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg':'Student with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
 
     try:
       user= User.objects.get(email=email)
       if user is not None:
-        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg':'Student with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
 
@@ -207,3 +191,48 @@ class AddStudent(APIView):
         ).save()
 
     return Response({'msg':'Student Created Successfully'}, status=status.HTTP_200_OK)
+
+
+class AddTeacher(APIView):
+
+  def post(self, request):
+    serializer = AddTeacherSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.data.get('email')
+    userID = serializer.data.get('userID')
+    name = serializer.data.get('name')
+    DOB = serializer.data.get('DOB')
+
+    # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
+    password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
+    try:
+      user= User.objects.get(userID=userID)
+      if user is not None:
+        return Response({'msg':'Teacher with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+      pass
+
+    try:
+      user= User.objects.get(email=email)
+      if user is not None:
+        return Response({'msg':'Teacher with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+      pass
+
+    user = User.objects.create_user(
+            email=email,
+            userID=userID,
+            name=name,
+        )
+    user.set_password(password)
+    user.is_tea=True
+    user.save()
+
+    Teacher(
+            user=user,
+            userID=userID,
+            name=name,
+            DOB=DOB,
+        ).save()
+
+    return Response({'msg':'Teacher Created Successfully'}, status=status.HTTP_200_OK)
