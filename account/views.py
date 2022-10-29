@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from account.serializers import *
-from account.models import User
+from account.models import User, Student
 from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
@@ -24,7 +24,9 @@ class UserLoginView(APIView):
     userID = serializer.data.get('userID')
     password = serializer.data.get('password')
     IN = userID//100000
+    # print(IN)
     user = authenticate(userID=userID, password=password)
+    # print(user)
     if user is not None:
         token = get_tokens_for_user(user)
         if IN == 2:
@@ -159,3 +161,32 @@ class ChangePasswordView(APIView):
       return Response({'msg':'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_200_OK)
     else:
       return Response({'msg':'AUTHORISATION FAILED !!'}, status=status.HTTP_200_OK)
+
+
+class AddStudent(APIView):
+    
+  def post(self, request):
+    serializer = AddStudentSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.data.get('email')
+    userID = serializer.data.get('userID')
+    name = serializer.data.get('name')
+    DOB = serializer.data.get('DOB')
+
+    password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
+
+    user = User.objects.create_user(
+            email=email,
+            userID=userID,
+            name=name
+        )
+    user.set_password(password)
+    user.save()
+
+    Student(
+            userID=userID,
+            name=name,
+            DOB=DOB,
+        ).save()
+
+    return Response({'msg':'Created Student'}, status=status.HTTP_200_OK)
