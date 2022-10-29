@@ -15,8 +15,7 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
-
-
+    
 class UserLoginView(APIView):
   def post(self, request, format=None):
     serializer = UserLoginSerializer(data=request.data)
@@ -24,11 +23,12 @@ class UserLoginView(APIView):
     userID = serializer.data.get('userID')
     password = serializer.data.get('password')
     IN = userID//100000
-    # print(IN)
+    print(IN)
     user = authenticate(userID=userID, password=password)
-    # print(user)
+    # print(user.id)
     if user is not None:
         token = get_tokens_for_user(user)
+        # token= 'kjdfkljdsq;lkfnkla'
         if IN == 2:
             return Response({'token': token,'msg':'Login Success - Student'}, status=status.HTTP_200_OK)
         elif IN == 1:
@@ -51,6 +51,7 @@ class SendOTPView(APIView):
     except:
       return Response({'msg':'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
     try:
+      print(user)
       if user.otp_created_at + timedelta(minutes=1) < timezone.now():
         EMAIL.send_otp_via_email(email)
         return Response({'msg':'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
@@ -173,14 +174,16 @@ class AddStudent(APIView):
     name = serializer.data.get('name')
     DOB = serializer.data.get('DOB')
 
+    # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
 
     user = User.objects.create_user(
             email=email,
             userID=userID,
-            name=name
+            name=name,
         )
     user.set_password(password)
+    user.is_stu=True
     user.save()
 
     Student(
@@ -189,4 +192,4 @@ class AddStudent(APIView):
             DOB=DOB,
         ).save()
 
-    return Response({'msg':'Created Student'}, status=status.HTTP_200_OK)
+    return Response({'msg':'Student Created Successfully'}, status=status.HTTP_200_OK)
