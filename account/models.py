@@ -95,7 +95,7 @@ sex_choice = (
 )
 
 class Student(models.Model):
-    user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
+    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
     userID = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
     sex = models.CharField(max_length=10,choices=sex_choice, blank=True,null= True)

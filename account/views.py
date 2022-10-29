@@ -15,7 +15,7 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
-    
+
 class UserLoginView(APIView):
   def post(self, request, format=None):
     serializer = UserLoginSerializer(data=request.data)
@@ -159,9 +159,9 @@ class ChangePasswordView(APIView):
     elif otpstatus=='expired':
       user.otp="****"
       user.save()
-      return Response({'msg':'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_200_OK)
+      return Response({'msg':'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_400_BAD_REQUEST)
     else:
-      return Response({'msg':'AUTHORISATION FAILED !!'}, status=status.HTTP_200_OK)
+      return Response({'msg':'AUTHORISATION FAILED !!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddStudent(APIView):
@@ -176,6 +176,19 @@ class AddStudent(APIView):
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
+    try:
+      user= User.objects.get(userID=userID)
+      if user is not None:
+        return Response({'msg':'User with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+      pass
+
+    try:
+      user= User.objects.get(email=email)
+      if user is not None:
+        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+      pass
 
     user = User.objects.create_user(
             email=email,
@@ -187,6 +200,7 @@ class AddStudent(APIView):
     user.save()
 
     Student(
+            user=user,
             userID=userID,
             name=name,
             DOB=DOB,
