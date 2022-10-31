@@ -9,5 +9,6 @@ urlpatterns = [
     path('verifyotp/',VerifyOTPView.as_view(), name='verifyotp'),
     path('changepassword/',ChangePasswordView.as_view(), name='changepassword'),
     path('addstudent/',AddStudent.as_view(), name='addStudent'),
-    path('addteacher/',AddTeacher.as_view(), name='addTeacher')
+    path('addteacher/',AddTeacher.as_view(), name='addTeacher'),
+    path('updatepassword/',UpdatePasswordView.as_view(), name='updatepassword'),
 ]
