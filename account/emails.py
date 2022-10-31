@@ -28,8 +28,8 @@ class EMAIL:
         user.otp_created_at = timezone.now()
         user.save()
 
-    def send_credentials_via_email(userID, password, name, mailaddress):
-        html_content = render_to_string("newaccount_template.html",{"user": name, "userID": userID, "password":password})
+    def send_credentials_via_email(userID, password, name, mailaddress, designation):
+        html_content = render_to_string("newaccount_template.html",{"user": name, "userID": userID, "password":password, "designation":designation})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE ACCOUNT CREATED",
