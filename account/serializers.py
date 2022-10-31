@@ -35,3 +35,10 @@ class AddTeacherSerializer(serializers.Serializer):
   name = serializers.CharField(max_length=200)
   userID = serializers.IntegerField()
   DOB = serializers.DateField()
+
+
+class UpdatePasswordSerializer(serializers.Serializer):
+  email = serializers.EmailField(max_length=255)
+  prevpassword = serializers.CharField(min_length=8, max_length=255)
+  newpassword = serializers.CharField(min_length=8, max_length=255)
+  confirmpassword = serializers.CharField(min_length=8, max_length=255)

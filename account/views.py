@@ -70,6 +70,19 @@ def matchotp(enteredOTP,generatedOTP,generatedTIME):
     return 'invalid'
 
 
+def checkpassword(password, confirmpassword):
+  if password != confirmpassword:
+    return 'different'
+  special_char= ['@', '#', '$', '%', '*', '&']
+  isSpecial_present = any(char in special_char for char in password)
+  isLower_present = any(char.islower() for char in password)
+  isUpper_present = any(char.isupper() for char in password)
+  isDigit_present = any(char.isdigit() for char in password)
+  isLength_ok = True if len(password)>=6 and len(password)<=20 else False
+  if not (isSpecial_present and isLower_present and isDigit_present and isUpper_present and isLength_ok):
+    return 'conditions not fulfilled'
+
+
 class VerifyOTPView(APIView):
   
   def post(self, request):
@@ -107,23 +120,17 @@ class ChangePasswordView(APIView):
     email=email.lower()
     user=User.objects.get(email = email)
 
-    special_char= ['@', '#', '$', '%', '*', '&']
-    isSpecial_present = any(char in special_char for char in password)
-    isLower_present = any(char.islower() for char in password)
-    isUpper_present = any(char.isupper() for char in password)
-    isDigit_present = any(char.isdigit() for char in password)
-    isLength_ok = True if len(password)>=6 and len(password)<=20 else False
-
-    if not (isSpecial_present and isLower_present and isDigit_present and isUpper_present and isLength_ok):
+    passwordstatus = checkpassword(password, confirmpassword)
+    if passwordstatus == 'conditions not fulfilled':
       context = {'msg':"Your Password must satisfy given conditions"}
       return Response(context, status.HTTP_400_BAD_REQUEST)
-    
+    elif passwordstatus == 'different':
+      return Response({'msg':"Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
+
     generatedOTP = user.otp
     generatedTIME = user.otp_created_at
     otpstatus=matchotp(enteredOTP,generatedOTP,generatedTIME)
     if otpstatus=='matched':
-      if password==confirmpassword:
-
         checkUser = authenticate(userID=user.userID, password=password)
         if checkUser is not None:
           context = {'msg':'Password entered is same as old one'}
@@ -133,8 +140,6 @@ class ChangePasswordView(APIView):
         user.otp="****"
         user.save()
         return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
-      else:
-        return Response({'msg':"Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
     elif otpstatus=='expired':
       user.otp="****"
       user.save()
@@ -234,3 +239,37 @@ class AddTeacher(APIView):
         ).save()
 
     return Response({'msg':'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+
+
+class UpdatePasswordView(APIView):
+  
+  def post(self, request):
+    serializer = UpdatePasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.data.get('email')
+    prevpassword = serializer.data.get('prevpassword')
+    newpassword = serializer.data.get('newpassword')
+    confirmpassword = serializer.data.get('confirmpassword')
+    email=email.lower()
+    user=User.objects.get(email = email)
+    
+    userID = user.userID
+    check=authenticate(userID=userID, password=prevpassword)
+    if check is None:
+      context = {'msg':"Previous Password is incorrect"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+
+    passwordstatus = checkpassword(newpassword, confirmpassword)
+    if passwordstatus == 'conditions not fulfilled':
+      context = {'msg':"Your Password must satisfy given conditions"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+    elif passwordstatus == 'different':
+      return Response({'msg':"Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if newpassword==prevpassword:
+      context = {'msg':"Your password is same as old one"}
+      return Response(context, status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(newpassword)
+    user.save()
+    return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
