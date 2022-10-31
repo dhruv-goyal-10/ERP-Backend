@@ -172,7 +172,7 @@ class AddStudent(APIView):
     try:
       user= User.objects.get(email=email)
       if user is not None:
-        return Response({'msg':'Student with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
 
@@ -218,7 +218,7 @@ class AddTeacher(APIView):
     try:
       user= User.objects.get(email=email)
       if user is not None:
-        return Response({'msg':'Teacher with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
 

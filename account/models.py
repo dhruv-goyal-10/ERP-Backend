@@ -2,6 +2,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.contrib.auth.models import BaseUserManager,AbstractBaseUser
 from django.utils import timezone
+from datetime import timedelta
 
 #  Custom User Manager
 class UserManager(BaseUserManager):
@@ -54,7 +55,7 @@ class User(AbstractBaseUser):
   is_stu = models.BooleanField(default=False)
   is_tea = models.BooleanField(default=False)
   otp = models.CharField(max_length=4, null=True, blank=True)
-  otp_created_at = models.DateTimeField(default=timezone.now)
+  otp_created_at = models.DateTimeField(default=timezone.now()-timedelta(minutes=1))
   objects = UserManager()
 
   USERNAME_FIELD = 'userID'
