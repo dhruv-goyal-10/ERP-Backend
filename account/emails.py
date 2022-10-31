@@ -13,7 +13,7 @@ class EMAIL:
         user = User.objects.get(email = mailaddress)
         user=user.name
 
-        html_content = render_to_string("email_template.html",{"otp": otp, "user": user})
+        html_content = render_to_string("otp_template.html",{"otp": otp, "user": user})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE PASSWORD RESET",
@@ -27,3 +27,15 @@ class EMAIL:
         user.otp = otp
         user.otp_created_at = timezone.now()
         user.save()
+
+    def send_credentials_via_email(userID, password, name, mailaddress):
+        html_content = render_to_string("newaccount_template.html",{"user": name, "userID": userID, "password":password})
+        text_content = strip_tags(html_content)
+        email = EmailMultiAlternatives(
+            "EDUMATE ACCOUNT CREATED",
+            text_content,
+            settings.EMAIL_HOST,
+            [mailaddress]
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send()

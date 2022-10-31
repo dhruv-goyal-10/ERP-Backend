@@ -175,24 +175,26 @@ class AddStudent(APIView):
         return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
+    try :
+      EMAIL.send_credentials_via_email(userID, password, name, email)
+      user = User.objects.create_user(
+              email=email,
+              userID=userID,
+              name=name,
+          )
+      user.set_password(password)
+      user.is_stu=True
+      user.save()
 
-    user = User.objects.create_user(
-            email=email,
-            userID=userID,
-            name=name,
-        )
-    user.set_password(password)
-    user.is_stu=True
-    user.save()
-
-    Student(
-            user=user,
-            userID=userID,
-            name=name,
-            DOB=DOB,
-        ).save()
-
-    return Response({'msg':'Student Created Successfully'}, status=status.HTTP_200_OK)
+      Student(
+              user=user,
+              userID=userID,
+              name=name,
+              DOB=DOB,
+          ).save()
+      return Response({'msg':'Student Created Successfully'}, status=status.HTTP_200_OK)
+    except:
+      return Response({'msg':'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddTeacher(APIView):
