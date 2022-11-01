@@ -202,12 +202,13 @@ class AddTeacher(APIView):
     serializer = AddTeacherSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
-    userID = serializer.data.get('userID')
     name = serializer.data.get('name')
     DOB = serializer.data.get('DOB')
 
-    # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
+    teachers=Teacher.objects.all()
+    userID=int(list(teachers)[-1].userID)+1
 
+    # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
     password=password[0].upper()+password[1:]
     try:
