@@ -296,14 +296,20 @@ class UpdatePasswordView(APIView):
 
 class ProfileDetails(APIView):
     
-    def get(self, request, userID):
+    def get(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         student = Student.objects.get(userID = userID)
         if student is None:
           return Response({'msg':'Enter the valid User ID'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = StudentProfileSerializer(student, many = False)
         return Response(serializer.data)
 
-    def put(self, request,userID):
+    def put(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         student = Student.objects.get(userID = userID)
         serializer = StudentProfileSerializer(student, data = request.data)
         if serializer.is_valid():
