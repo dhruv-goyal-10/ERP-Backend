@@ -10,6 +10,7 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+import jwt
 
 
 def get_tokens_for_user(user):
@@ -262,16 +263,17 @@ class UpdatePasswordView(APIView):
   permission_classes = [ IsAuthenticated ]
   
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+
     serializer = UpdatePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.data.get('email')
     prevpassword = serializer.data.get('prevpassword')
     newpassword = serializer.data.get('newpassword')
     confirmpassword = serializer.data.get('confirmpassword')
-    email=email.lower()
-    user=User.objects.get(email = email)
+    user=User.objects.get(userID = userID)
     
-    userID = user.userID
     check=authenticate(userID=userID, password=prevpassword)
     if check is None:
       context = {'msg':"Previous Password is incorrect"}
