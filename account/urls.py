@@ -11,4 +11,5 @@ urlpatterns = [
     path('addstudent/',AddStudent.as_view(), name='addStudent'),
     path('addteacher/',AddTeacher.as_view(), name='addTeacher'),
     path('updatepassword/',UpdatePasswordView.as_view(), name='updatepassword'),
+    path('profiledetails/<str:userID>',ProfileDetails.as_view(), name='profiledetails'),
 ]

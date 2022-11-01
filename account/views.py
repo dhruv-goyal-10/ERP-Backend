@@ -280,3 +280,25 @@ class UpdatePasswordView(APIView):
     user.set_password(newpassword)
     user.save()
     return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
+
+class ProfileDetails(APIView):
+    
+    def get(self, request, userID):
+        student = Student.objects.get(userID = userID)
+        if student is None:
+          return Response({'msg':'Enter the valid User ID'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = StudentProfileSerializer(student, many = False)
+        return Response(serializer.data)
+
+    def put(self, request,userID):
+        student = Student.objects.get(userID = userID)
+        serializer = StudentProfileSerializer(student, data = request.data)
+        if serializer.is_valid():
+          name = serializer.validated_data.get('name')
+          user = User.objects.get(userID = userID)
+          user.name=name
+          user.save()
+          serializer.save()
+          return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        
