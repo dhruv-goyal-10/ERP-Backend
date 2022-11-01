@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from account.models import User 
+from rest_framework.serializers import ModelSerializer
+from account.models import User, Student, Teacher
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -40,3 +41,10 @@ class UpdatePasswordSerializer(serializers.Serializer):
   prevpassword = serializers.CharField(min_length=8, max_length=255)
   newpassword = serializers.CharField(min_length=8, max_length=255)
   confirmpassword = serializers.CharField(min_length=8, max_length=255)
+
+class StudentProfileSerializer(ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['name', 'sex', 'DOB']
+
+
