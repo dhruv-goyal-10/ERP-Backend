@@ -8,6 +8,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 
 def get_tokens_for_user(user):
@@ -152,6 +154,8 @@ class ChangePasswordView(APIView):
 
 
 class AddStudent(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
     
   def post(self, request):
     serializer = AddStudentSerializer(data=request.data)
@@ -203,6 +207,8 @@ class AddStudent(APIView):
 
 
 class AddTeacher(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   def post(self, request):
     serializer = AddTeacherSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -252,6 +258,8 @@ class AddTeacher(APIView):
 
 
 class UpdatePasswordView(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   
   def post(self, request):
     serializer = UpdatePasswordSerializer(data=request.data)
