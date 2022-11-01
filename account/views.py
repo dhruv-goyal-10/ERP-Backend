@@ -301,4 +301,48 @@ class ProfileDetails(APIView):
           serializer.save()
           return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class UpdateEmail(APIView):
+  
+  def post(self, request, userID):
+    serializer = SendOTPSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    newemail = serializer.data.get('email')
+    newemail = newemail.lower()
+    try:
+      user=User.objects.get(email = newemail)
+      return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+      EMAIL.send_otp_for_email_verification(userID, newemail)
+      return Response({'msg':'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
+      
+    
+
+  def put (self,request, userID):
+    user = User.objects.get(userID = userID)
+    
+    serializer = VerifyOTPSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    enteredOTP = serializer.data.get('otp')
+    newemail = serializer.data.get('email')
+
+
+    generatedOTP = (user).otp
+    generatedTIME = user.otp_created_at
+    otpstatus = matchotp ( enteredOTP, generatedOTP, generatedTIME )
+    if otpstatus == 'matched':
+      user.email = newemail
+      user.otp = "****"
+      user.save()
+      return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
+    elif otpstatus=='notmatched':
+      return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
+    elif otpstatus=='expired':
+      user.otp = "****"
+      user.save()
+      return Response({'msg':'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
+    else:
+      return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
+    
         

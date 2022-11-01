@@ -39,3 +39,25 @@ class EMAIL:
         )
         email.attach_alternative(html_content, "text/html")
         email.send()
+
+
+
+    def send_otp_for_email_verification(userID, mailaddress):
+        otp = random.randint(1000,9999)
+        user = User.objects.get(userID = userID)
+        user.otp = otp
+        user.otp_created_at = timezone.now()
+        user.save()
+        user=user.name
+        html_content = render_to_string("email_verification.html",{"otp": otp, "user": user})
+        text_content = strip_tags(html_content)
+        email = EmailMultiAlternatives(
+            "EDUMATE MAIL VERIFICATION",
+            text_content,
+            settings.EMAIL_HOST,
+            [mailaddress]
+        )
+
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+
