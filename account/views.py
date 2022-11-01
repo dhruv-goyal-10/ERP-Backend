@@ -4,32 +4,19 @@ from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from account.serializers import *
 from account.models import *
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
 from django.utils import timezone
 
-# def get_tokens_for_user(user):
-#     refresh = RefreshToken.for_user(user)
-#     return {
-#         'refresh': str(refresh),
-#         'access': str(refresh.access_token),
-#     }
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token['userID'] = user.userID
-        # ...
-
-        return token
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    refresh['userID'] = user.userID
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 
 class UserLoginView(APIView):
@@ -40,7 +27,7 @@ class UserLoginView(APIView):
     password = serializer.data.get('password')
     user = authenticate(userID=userID, password=password)
     if user is not None:
-        token = 'token'#get_tokens_for_user(user)
+        token = get_tokens_for_user(user)
         if user.is_stu:
             return Response({'token': token,'msg':'Login Success - Student'}, status=status.HTTP_200_OK)
         elif user.is_tea:
