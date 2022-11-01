@@ -26,7 +26,6 @@ class ChangePasswordSerializer(serializers.Serializer):
 class AddStudentSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)
   name = serializers.CharField(max_length=200)
-  userID = serializers.IntegerField()
   DOB = serializers.DateField()
 
 

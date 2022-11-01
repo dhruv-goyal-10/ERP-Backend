@@ -154,9 +154,11 @@ class AddStudent(APIView):
     serializer = AddStudentSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
-    userID = serializer.data.get('userID')
     name = serializer.data.get('name')
     DOB = serializer.data.get('DOB')
+
+    students=Student.objects.all()
+    userID=int(list(students)[-1].userID)+1
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
