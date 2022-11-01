@@ -8,13 +8,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+import jwt
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+    refresh['userID'] = user.userID
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
 
 class UserLoginView(APIView):
   def post(self, request, format=None):
@@ -149,6 +155,8 @@ class ChangePasswordView(APIView):
 
 
 class AddStudent(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
     
   def post(self, request):
     serializer = AddStudentSerializer(data=request.data)
@@ -200,6 +208,8 @@ class AddStudent(APIView):
 
 
 class AddTeacher(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   def post(self, request):
     serializer = AddTeacherSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -249,18 +259,21 @@ class AddTeacher(APIView):
 
 
 class UpdatePasswordView(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+
     serializer = UpdatePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.data.get('email')
     prevpassword = serializer.data.get('prevpassword')
     newpassword = serializer.data.get('newpassword')
     confirmpassword = serializer.data.get('confirmpassword')
-    email=email.lower()
-    user=User.objects.get(email = email)
+    user=User.objects.get(userID = userID)
     
-    userID = user.userID
     check=authenticate(userID=userID, password=prevpassword)
     if check is None:
       context = {'msg':"Previous Password is incorrect"}
