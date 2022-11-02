@@ -28,5 +28,14 @@ class UserModelAdmin(BaseUserAdmin):
 
 # Now register the new UserModelAdmin...
 admin.site.register(User, UserModelAdmin)
-admin.site.register(Student)
-admin.site.register(Teacher)
+
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('userID','name', 'user','DOB')
+    search_fields = ('name',)
+
+admin.site.register(Student, StudentAdmin)
+
+class TeacherAdmin(admin.ModelAdmin):
+    list_display = ('userID','name', 'user','DOB')
+    search_fields = ('name',)
+admin.site.register(Teacher, TeacherAdmin)

@@ -166,8 +166,7 @@ class AddStudent(APIView):
     if not user.is_admin :
       return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-    serializer = AddStudentSerializer(data=request.data)
+    serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     name = serializer.data.get('name')
@@ -184,18 +183,11 @@ class AddStudent(APIView):
     password=password[0].upper()+password[1:]
 
     try:
-      user= User.objects.get(userID=userID)
-      if user is not None:
-        return Response({'msg':'Student with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
-    except:
-      pass
-
-    try:
       user= User.objects.get(email=email)
-      if user is not None:
-        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
+    
     try :
       EMAIL.send_credentials_via_email(userID, password, name, email, 'student')
       user = User.objects.create_user(
@@ -229,7 +221,7 @@ class AddTeacher(APIView):
     if not user.is_admin :
       return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
     
-    serializer = AddTeacherSerializer(data=request.data)
+    serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     name = serializer.data.get('name')
@@ -244,17 +236,10 @@ class AddTeacher(APIView):
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
     password=password[0].upper()+password[1:]
-    try:
-      user= User.objects.get(userID=userID)
-      if user is not None:
-        return Response({'msg':'Teacher with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
-    except:
-      pass
 
     try:
       user= User.objects.get(email=email)
-      if user is not None:
-        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
     try :
@@ -319,15 +304,19 @@ class ProfileDetails(APIView):
     authentication_classes = [ JWTAuthentication ]
     permission_classes = [ IsAuthenticated ]
     
+    
     def get(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
+        
         student = Student.objects.get(userID = userID)
-        if student is None:
-          return Response({'msg':'Enter the valid User ID'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = StudentProfileSerializer(student, many = False)
-        return Response(serializer.data)
+
+        user = User.objects.get(userID = userID)
+        eserializer = EmailSerializer(user, many = False)
+    
+        return Response(serializer.data | eserializer.data)
 
     def put(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -335,14 +324,18 @@ class ProfileDetails(APIView):
         userID = tokenset['userID']
         student = Student.objects.get(userID = userID)
         serializer = StudentProfileSerializer(student, data = request.data)
-        if serializer.is_valid():
-          name = serializer.validated_data.get('name')
-          user = User.objects.get(userID = userID)
-          user.name=name
-          user.save()
-          serializer.save()
-          return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        #Updating the name in User Model
+        name = serializer.validated_data.get('name')
+        user = User.objects.get(userID = userID)
+        user.name=name
+        user.save()
+        
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        # return Response({'msg':'Your changes have been saved'}, status=status.HTTP_202_ACCEPTED)
+        # return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class UpdateEmail(APIView):
@@ -353,7 +346,7 @@ class UpdateEmail(APIView):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
     tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
     userID = tokenset['userID']
-    serializer = SendOTPSerializer(data=request.data)
+    serializer = EmailSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     newemail = serializer.data.get('email')
     newemail = newemail.lower()
@@ -365,7 +358,6 @@ class UpdateEmail(APIView):
       return Response({'msg':'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
       
     
-
   def put (self,request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
     tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
