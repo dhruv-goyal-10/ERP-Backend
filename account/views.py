@@ -44,7 +44,7 @@ class UserLoginView(APIView):
 class SendOTPView(APIView):
 
   def post(self, request):
-    serializer=EmailSerializer(data=request.data)
+    serializer=SendOTPSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     email=email.lower()

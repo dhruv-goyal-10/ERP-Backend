@@ -115,6 +115,8 @@ class Student(models.Model):
     
     father_name =  models.CharField(max_length=200, blank=True, null=True)
     father_phone = models.BigIntegerField(blank=True, null=True, validators=[MinValueValidator(1000000000), MaxValueValidator(9999999999)])
+    mother_name =  models.CharField(max_length=200, blank=True, null=True)
+    mother_phone = models.BigIntegerField(blank=True, null=True, validators=[MinValueValidator(1000000000), MaxValueValidator(9999999999)])
     
     def __str__(self):
         return self.name
