@@ -8,13 +8,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+import jwt
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+    refresh['userID'] = user.userID
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
 
 class UserLoginView(APIView):
   def post(self, request, format=None):
@@ -149,8 +155,18 @@ class ChangePasswordView(APIView):
 
 
 class AddStudent(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
     
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
     serializer = AddStudentSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -158,7 +174,10 @@ class AddStudent(APIView):
     DOB = serializer.data.get('DOB')
 
     students=Student.objects.all()
-    userID=int(list(students)[-1].userID)+1
+    try:
+      userID=int(list(students)[-1].userID)+1
+    except:
+      userID=200000
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
@@ -200,7 +219,16 @@ class AddStudent(APIView):
 
 
 class AddTeacher(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+    
     serializer = AddTeacherSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -208,7 +236,10 @@ class AddTeacher(APIView):
     DOB = serializer.data.get('DOB')
 
     teachers=Teacher.objects.all()
-    userID=int(list(teachers)[-1].userID)+1
+    try:
+      userID=int(list(teachers)[-1].userID)+1
+    except:
+      userID=100000
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
@@ -249,18 +280,21 @@ class AddTeacher(APIView):
 
 
 class UpdatePasswordView(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+
     serializer = UpdatePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.data.get('email')
     prevpassword = serializer.data.get('prevpassword')
     newpassword = serializer.data.get('newpassword')
     confirmpassword = serializer.data.get('confirmpassword')
-    email=email.lower()
-    user=User.objects.get(email = email)
+    user=User.objects.get(userID = userID)
     
-    userID = user.userID
     check=authenticate(userID=userID, password=prevpassword)
     if check is None:
       context = {'msg':"Previous Password is incorrect"}
@@ -283,14 +317,20 @@ class UpdatePasswordView(APIView):
 
 class ProfileDetails(APIView):
     
-    def get(self, request, userID):
+    def get(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         student = Student.objects.get(userID = userID)
         if student is None:
           return Response({'msg':'Enter the valid User ID'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = StudentProfileSerializer(student, many = False)
         return Response(serializer.data)
 
-    def put(self, request,userID):
+    def put(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         student = Student.objects.get(userID = userID)
         serializer = StudentProfileSerializer(student, data = request.data)
         if serializer.is_valid():
