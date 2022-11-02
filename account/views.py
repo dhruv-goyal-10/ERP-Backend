@@ -166,7 +166,6 @@ class AddStudent(APIView):
     if not user.is_admin :
       return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-
     serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -184,18 +183,11 @@ class AddStudent(APIView):
     password=password[0].upper()+password[1:]
 
     try:
-      user= User.objects.get(userID=userID)
-      if user is not None:
-        return Response({'msg':'Student with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
-    except:
-      pass
-
-    try:
       user= User.objects.get(email=email)
-      if user is not None:
-        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
+    
     try :
       EMAIL.send_credentials_via_email(userID, password, name, email, 'student')
       user = User.objects.create_user(
@@ -244,17 +236,10 @@ class AddTeacher(APIView):
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
     password=password[0].upper()+password[1:]
-    try:
-      user= User.objects.get(userID=userID)
-      if user is not None:
-        return Response({'msg':'Teacher with this userID already exists'}, status=status.HTTP_400_BAD_REQUEST)
-    except:
-      pass
 
     try:
       user= User.objects.get(email=email)
-      if user is not None:
-        return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     except:
       pass
     try :
