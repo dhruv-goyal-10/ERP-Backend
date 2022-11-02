@@ -8,13 +8,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . emails import *
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+import jwt
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+    refresh['userID'] = user.userID
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
 
 class UserLoginView(APIView):
   def post(self, request, format=None):
@@ -149,8 +155,18 @@ class ChangePasswordView(APIView):
 
 
 class AddStudent(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
     
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
     serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -158,7 +174,10 @@ class AddStudent(APIView):
     DOB = serializer.data.get('DOB')
 
     students=Student.objects.all()
-    userID=int(list(students)[-1].userID)+1
+    try:
+      userID=int(list(students)[-1].userID)+1
+    except:
+      userID=200000
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
@@ -200,7 +219,16 @@ class AddStudent(APIView):
 
 
 class AddTeacher(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+    
     serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -208,7 +236,10 @@ class AddTeacher(APIView):
     DOB = serializer.data.get('DOB')
 
     teachers=Teacher.objects.all()
-    userID=int(list(teachers)[-1].userID)+1
+    try:
+      userID=int(list(teachers)[-1].userID)+1
+    except:
+      userID=100000
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
@@ -249,18 +280,21 @@ class AddTeacher(APIView):
 
 
 class UpdatePasswordView(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+
     serializer = UpdatePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.data.get('email')
     prevpassword = serializer.data.get('prevpassword')
     newpassword = serializer.data.get('newpassword')
     confirmpassword = serializer.data.get('confirmpassword')
-    email=email.lower()
-    user=User.objects.get(email = email)
+    user=User.objects.get(userID = userID)
     
-    userID = user.userID
     check=authenticate(userID=userID, password=prevpassword)
     if check is None:
       context = {'msg':"Previous Password is incorrect"}
@@ -282,17 +316,27 @@ class UpdatePasswordView(APIView):
     return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
 
 class ProfileDetails(APIView):
+    authentication_classes = [ JWTAuthentication ]
+    permission_classes = [ IsAuthenticated ]
     
-    def get(self, request, userID):
-      student = Student.objects.get(userID = userID)
-      serializer = StudentProfileSerializer(student, many = False)
-
-      user = User.objects.get(userID = userID)
-      eserializer = EmailSerializer(user, many = False)
     
-      return Response(serializer.data | eserializer.data)
+    def get(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
+        
+        student = Student.objects.get(userID = userID)
+        serializer = StudentProfileSerializer(student, many = False)
 
-    def put(self, request,userID):
+        user = User.objects.get(userID = userID)
+        eserializer = EmailSerializer(user, many = False)
+    
+        return Response(serializer.data | eserializer.data)
+
+    def put(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         student = Student.objects.get(userID = userID)
         serializer = StudentProfileSerializer(student, data = request.data)
         serializer.is_valid(raise_exception=True)
@@ -307,4 +351,56 @@ class ProfileDetails(APIView):
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         # return Response({'msg':'Your changes have been saved'}, status=status.HTTP_202_ACCEPTED)
         # return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class UpdateEmail(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
+  
+  def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    serializer = EmailSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    newemail = serializer.data.get('email')
+    newemail = newemail.lower()
+    try:
+      user=User.objects.get(email = newemail)
+      return Response({'msg':'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    except:
+      EMAIL.send_otp_for_email_verification(userID, newemail)
+      return Response({'msg':'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
+      
+    
+
+  def put (self,request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user = User.objects.get(userID = userID)
+    
+    serializer = VerifyOTPSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    enteredOTP = serializer.data.get('otp')
+    newemail = serializer.data.get('email')
+
+
+    generatedOTP = (user).otp
+    generatedTIME = user.otp_created_at
+    otpstatus = matchotp ( enteredOTP, generatedOTP, generatedTIME )
+    if otpstatus == 'matched':
+      user.email = newemail
+      user.otp = "****"
+      user.save()
+      return Response({'msg':'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
+    elif otpstatus=='notmatched':
+      return Response({'msg':'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
+    elif otpstatus=='expired':
+      user.otp = "****"
+      user.save()
+      return Response({'msg':'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
+    else:
+      return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
+    
         
