@@ -316,6 +316,8 @@ class UpdatePasswordView(APIView):
     return Response({'msg':'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
 
 class ProfileDetails(APIView):
+    authentication_classes = [ JWTAuthentication ]
+    permission_classes = [ IsAuthenticated ]
     
     def get(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -344,8 +346,13 @@ class ProfileDetails(APIView):
 
 
 class UpdateEmail(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
   
-  def post(self, request, userID):
+  def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
     serializer = SendOTPSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     newemail = serializer.data.get('email')
@@ -359,7 +366,10 @@ class UpdateEmail(APIView):
       
     
 
-  def put (self,request, userID):
+  def put (self,request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
     user = User.objects.get(userID = userID)
     
     serializer = VerifyOTPSerializer(data=request.data)

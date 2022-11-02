@@ -15,5 +15,5 @@ urlpatterns = [
     path('addteacher/',AddTeacher.as_view(), name='addTeacher'),
     path('updatepassword/',UpdatePasswordView.as_view(), name='updatepassword'),
     path('profiledetails/',ProfileDetails.as_view(), name='profiledetails'),
-    path('updateemail/<str:userID>',UpdateEmail.as_view(), name='updateemail'),
+    path('updateemail/',UpdateEmail.as_view(), name='updateemail'),
 ]
