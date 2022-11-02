@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.urls import path, include
 from account.views import *
@@ -16,4 +15,5 @@ urlpatterns = [
     path('addteacher/',AddTeacher.as_view(), name='addTeacher'),
     path('updatepassword/',UpdatePasswordView.as_view(), name='updatepassword'),
     path('profiledetails/',ProfileDetails.as_view(), name='profiledetails'),
+    path('updateemail/',UpdateEmail.as_view(), name='updateemail'),
 ]
