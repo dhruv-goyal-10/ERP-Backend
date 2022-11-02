@@ -38,7 +38,7 @@ class UserLoginView(APIView):
 class SendOTPView(APIView):
 
   def post(self, request):
-    serializer=SendOTPSerializer(data=request.data)
+    serializer=EmailSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     email=email.lower()
@@ -151,7 +151,7 @@ class ChangePasswordView(APIView):
 class AddStudent(APIView):
     
   def post(self, request):
-    serializer = AddStudentSerializer(data=request.data)
+    serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     name = serializer.data.get('name')
@@ -201,7 +201,7 @@ class AddStudent(APIView):
 
 class AddTeacher(APIView):
   def post(self, request):
-    serializer = AddTeacherSerializer(data=request.data)
+    serializer = AddUserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
     name = serializer.data.get('name')
@@ -284,21 +284,26 @@ class UpdatePasswordView(APIView):
 class ProfileDetails(APIView):
     
     def get(self, request, userID):
-        student = Student.objects.get(userID = userID)
-        if student is None:
-          return Response({'msg':'Enter the valid User ID'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = StudentProfileSerializer(student, many = False)
-        return Response(serializer.data)
+      student = Student.objects.get(userID = userID)
+      serializer = StudentProfileSerializer(student, many = False)
+
+      user = User.objects.get(userID = userID)
+      eserializer = EmailSerializer(user, many = False)
+    
+      return Response(serializer.data | eserializer.data)
 
     def put(self, request,userID):
         student = Student.objects.get(userID = userID)
         serializer = StudentProfileSerializer(student, data = request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        #Updating the name in User Model
         name = serializer.validated_data.get('name')
         user = User.objects.get(userID = userID)
         user.name=name
         user.save()
-        serializer.save()
+        
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         # return Response({'msg':'Your changes have been saved'}, status=status.HTTP_202_ACCEPTED)
         # return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)

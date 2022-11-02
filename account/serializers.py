@@ -8,8 +8,10 @@ class UserLoginSerializer(serializers.Serializer):
   password = serializers.CharField(min_length=8, max_length=255)
 
 
-class SendOTPSerializer(serializers.Serializer):
-  email = serializers.EmailField(max_length=255)
+class EmailSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email']
 
 
 class VerifyOTPSerializer(serializers.Serializer):
@@ -24,17 +26,10 @@ class ChangePasswordSerializer(serializers.Serializer):
   confirmpassword = serializers.CharField(min_length=8, max_length=255)
 
 
-class AddStudentSerializer(serializers.Serializer):
+class AddUserSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)
   name = serializers.CharField(max_length=200)
   DOB = serializers.DateField()
-
-
-class AddTeacherSerializer(serializers.Serializer):
-  email = serializers.EmailField(max_length=255)
-  name = serializers.CharField(max_length=200)
-  DOB = serializers.DateField()
-
 
 class UpdatePasswordSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)
@@ -45,6 +40,7 @@ class UpdatePasswordSerializer(serializers.Serializer):
 class StudentProfileSerializer(ModelSerializer):
     class Meta:
         model = Student
-        fields = ['name', 'sex', 'DOB', 'pic']
+        fields = ['name', 'sex', 'DOB', 'userID', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state',
+                  'student_phone', 'father_name', 'father_phone', ]
 
 
