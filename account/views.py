@@ -373,7 +373,6 @@ class UpdateEmail(APIView):
       return Response({'msg':'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
       
     
-
   def put (self,request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
     tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
