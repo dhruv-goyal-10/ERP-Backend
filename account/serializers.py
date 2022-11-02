@@ -45,6 +45,6 @@ class UpdatePasswordSerializer(serializers.Serializer):
 class StudentProfileSerializer(ModelSerializer):
     class Meta:
         model = Student
-        fields = ['name', 'sex', 'DOB']
+        fields = ['name', 'sex', 'DOB', 'pic']
 
 

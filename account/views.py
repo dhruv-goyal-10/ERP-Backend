@@ -293,12 +293,13 @@ class ProfileDetails(APIView):
     def put(self, request,userID):
         student = Student.objects.get(userID = userID)
         serializer = StudentProfileSerializer(student, data = request.data)
-        if serializer.is_valid():
-          name = serializer.validated_data.get('name')
-          user = User.objects.get(userID = userID)
-          user.name=name
-          user.save()
-          serializer.save()
-          return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        serializer.is_valid(raise_exception=True)
+        name = serializer.validated_data.get('name')
+        user = User.objects.get(userID = userID)
+        user.name=name
+        user.save()
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        # return Response({'msg':'Your changes have been saved'}, status=status.HTTP_202_ACCEPTED)
+        # return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
         

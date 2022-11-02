@@ -101,6 +101,7 @@ class Student(models.Model):
     name = models.CharField(max_length=200)
     sex = models.CharField(max_length=10,choices=sex_choice, blank=True,null= True)
     DOB = models.DateField(blank=True,null= True)
+    pic = models.ImageField(upload_to='students/',height_field=None, width_field=None, max_length=100,blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -112,6 +113,7 @@ class Teacher(models.Model):
     name = models.CharField(max_length=100)
     sex = models.CharField(max_length=10,choices=sex_choice,blank=True,null= True)
     DOB = models.DateField(blank=True,null= True)
+    pic = models.ImageField(upload_to='teachers/',height_field=None, width_field=None, max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.name
