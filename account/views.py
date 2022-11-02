@@ -159,6 +159,14 @@ class AddStudent(APIView):
   permission_classes = [ IsAuthenticated ]
     
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
     serializer = AddStudentSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -166,7 +174,10 @@ class AddStudent(APIView):
     DOB = serializer.data.get('DOB')
 
     students=Student.objects.all()
-    userID=int(list(students)[-1].userID)+1
+    try:
+      userID=int(list(students)[-1].userID)+1
+    except:
+      userID=200000
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
@@ -211,6 +222,13 @@ class AddTeacher(APIView):
   authentication_classes = [ JWTAuthentication ]
   permission_classes = [ IsAuthenticated ]
   def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+    
     serializer = AddTeacherSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.data.get('email')
@@ -218,7 +236,10 @@ class AddTeacher(APIView):
     DOB = serializer.data.get('DOB')
 
     teachers=Teacher.objects.all()
-    userID=int(list(teachers)[-1].userID)+1
+    try:
+      userID=int(list(teachers)[-1].userID)+1
+    except:
+      userID=100000
 
     # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
     password=name.split(" ")[0].lower() + '@' + DOB.replace("-","")
