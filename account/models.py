@@ -135,8 +135,8 @@ class Teacher(models.Model):
 
 
 class Updates(models.Model):
-    title = models.CharField(max_length=20)
-    description = models.TextField(blank=True, null=True)
+    title = models.TextField()
+    description = models.TextField()
     lastedit = models.DateTimeField(auto_now=True)
     showto = models.IntegerField(default = 3)
 

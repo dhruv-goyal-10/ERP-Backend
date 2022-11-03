@@ -334,8 +334,6 @@ class ProfileDetails(APIView):
         user.save()
         
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        # return Response({'msg':'Your changes have been saved'}, status=status.HTTP_202_ACCEPTED)
-        # return Response({'message':'Invalid'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class UpdateEmail(APIView):
@@ -406,3 +404,18 @@ class UpdateSectionView(APIView):
       serializer = UpdateSectionSerializer(updates, many = True)
       SerializerData = [serializer.data]
       return Response(SerializerData)
+
+  def post(self, request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = UpdateSectionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    if serializer.is_valid():
+      serializer.save()
+    return Response({'msg':'UPDATE ADDED'},  status=status.HTTP_200_OK)
+    
