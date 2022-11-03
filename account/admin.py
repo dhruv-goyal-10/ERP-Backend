@@ -1,5 +1,5 @@
 from django.contrib import admin
-from account.models import User, Student, Teacher
+from account.models import *
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 class UserModelAdmin(BaseUserAdmin):
@@ -39,3 +39,9 @@ class TeacherAdmin(admin.ModelAdmin):
     list_display = ('userID','name', 'user','DOB')
     search_fields = ('name',)
 admin.site.register(Teacher, TeacherAdmin)
+
+class UpdatesAdmin(admin.ModelAdmin):
+    list_display = ('title','description', 'showto')
+    search_fields = ('title',)
+
+admin.site.register(Updates, UpdatesAdmin)

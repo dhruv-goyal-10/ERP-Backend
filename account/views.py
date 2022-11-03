@@ -388,3 +388,21 @@ class UpdateEmail(APIView):
       return Response({'msg':'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
     
         
+class UpdateSectionView(APIView):
+  authentication_classes = [ JWTAuthentication ]
+  permission_classes = [ IsAuthenticated ]
+
+  def get(self, request):
+      token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+      tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+      userID = tokenset['userID']
+      who = userID//100000
+      if who == 2:
+        updates =  Updates.objects.filter(showto=3).values() | Updates.objects.filter(showto=1).values()
+      elif who == 1:
+        updates =  Updates.objects.filter(showto=3).values() | Updates.objects.filter(showto=2).values()
+      else:
+        updates = Updates.objects.all()
+      serializer = UpdateSectionSerializer(updates, many = True)
+      SerializerData = [serializer.data]
+      return Response(SerializerData)

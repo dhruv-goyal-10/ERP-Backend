@@ -132,3 +132,16 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Updates(models.Model):
+    title = models.CharField(max_length=20)
+    description = models.TextField(blank=True, null=True)
+    lastedit = models.DateTimeField(auto_now=True)
+    showto = models.IntegerField(default = 3)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['-lastedit']
