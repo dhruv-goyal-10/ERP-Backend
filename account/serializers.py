@@ -50,4 +50,4 @@ class UpdateSectionSerializer(ModelSerializer):
 
   class Meta:
     model = Updates
-    fields = ['title', 'description', 'showto']
+    fields = '__all__'

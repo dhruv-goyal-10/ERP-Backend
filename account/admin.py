@@ -41,7 +41,7 @@ class TeacherAdmin(admin.ModelAdmin):
 admin.site.register(Teacher, TeacherAdmin)
 
 class UpdatesAdmin(admin.ModelAdmin):
-    list_display = ('title','description', 'showto')
+    list_display = ('id', 'title','description', 'showto')
     search_fields = ('title',)
 
 admin.site.register(Updates, UpdatesAdmin)
