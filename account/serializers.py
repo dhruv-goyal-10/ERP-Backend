@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from account.models import User, Student, Teacher
+from account.models import *
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -46,3 +46,8 @@ class StudentProfileSerializer(ModelSerializer):
                   'student_phone', 'father_name', 'father_phone', 'mother_name', 'mother_phone',]
 
 
+class UpdateSectionSerializer(ModelSerializer):
+
+  class Meta:
+    model = Updates
+    fields = '__all__'
