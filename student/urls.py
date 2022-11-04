@@ -1,6 +1,7 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.urls import path
+from student.views import *
 
 urlpatterns = [
-    # path('', ),
+    path('profiledetails/', ProfileDetails.as_view(), name='profiledetails'),
 ]
