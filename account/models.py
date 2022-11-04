@@ -102,8 +102,36 @@ sex_choice = (
 )
 
 
+
+class Department(models.Model):
+    id = models.CharField(primary_key='True', max_length=100)
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+    
+class Klass(models.Model):
+    id = models.CharField(primary_key='True', max_length=100)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True)
+    section = models.CharField(max_length=100)
+    semester = models.IntegerField()
+    def __str__(self):
+        department = Department.objects.get(name=self.department)
+        return '%s : %d%s' % (department.name, self.semester, self.section)
+    
+    class Meta:
+        verbose_name_plural = 'Classes'
+        
+class Subject(models.Model):
+    dept = models.ForeignKey(Department, on_delete=models.CASCADE)
+    code = models.CharField(primary_key='True', max_length=50)
+    name = models.CharField(max_length=50)
+    def __str__(self):
+        return self.name
+    
 class Student(models.Model):
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
+    Klass_id = models.ForeignKey(Klass, on_delete=models.CASCADE, null=True)
     userID = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
     sex = models.CharField(
@@ -135,6 +163,7 @@ class Student(models.Model):
 
 class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True)
     userID = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     sex = models.CharField(
@@ -145,9 +174,20 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.name
+    
+class AssignClass(models.Model):
+    klass_id = models.ForeignKey(Klass, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = (('subject', 'klass_id', 'teacher'),)
+        verbose_name_plural = 'Assign Classes'
+        
+    def __str__(self):
+        return '%s' % (self.klass_id)
 
-class Updates(models.Model):
+class Update(models.Model):
     title = models.TextField()
     description = models.TextField()
     lastedit = models.DateTimeField(auto_now=True)

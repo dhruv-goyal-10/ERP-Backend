@@ -27,21 +27,41 @@ class UserModelAdmin(BaseUserAdmin):
 
 
 # Now register the new UserModelAdmin...
-admin.site.register(User, UserModelAdmin)
+
 
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('userID','name', 'user','DOB')
     search_fields = ('name',)
 
-admin.site.register(Student, StudentAdmin)
+
 
 class TeacherAdmin(admin.ModelAdmin):
     list_display = ('userID','name', 'user','DOB')
     search_fields = ('name',)
-admin.site.register(Teacher, TeacherAdmin)
+
 
 class UpdatesAdmin(admin.ModelAdmin):
     list_display = ('id', 'title','description', 'showto')
     search_fields = ('title',)
+    
+    
+class KlassAdmin(admin.ModelAdmin):
+    list_display = ('id', 'department', 'semester', 'section')
+    search_fields = ('id', 'department__name', 'semester', 'section')
+    ordering = ['department__name', 'semester', 'section']
+    
+    
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'id')
+    search_fields = ('name', 'id')
+    ordering = ['name']
+    
 
-admin.site.register(Updates, UpdatesAdmin)
+admin.site.register(Subject)
+admin.site.register(AssignClass)
+admin.site.register(User, UserModelAdmin)
+admin.site.register(Student, StudentAdmin)
+admin.site.register(Teacher, TeacherAdmin)
+admin.site.register(Department, DepartmentAdmin)
+admin.site.register(Klass, KlassAdmin)
+admin.site.register(Update, UpdatesAdmin)

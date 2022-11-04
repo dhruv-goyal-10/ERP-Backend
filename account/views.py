@@ -249,13 +249,13 @@ class UpdateSectionView(APIView):
         userID = tokenset['userID']
         who = userID//100000
         if who == 2:
-            updates = Updates.objects.filter(showto=3).values(
-            ) | Updates.objects.filter(showto=1).values()
+            updates = Update.objects.filter(showto=3).values(
+            ) | Update.objects.filter(showto=1).values()
         elif who == 1:
-            updates = Updates.objects.filter(showto=3).values(
-            ) | Updates.objects.filter(showto=2).values()
+            updates = Update.objects.filter(showto=3).values(
+            ) | Update.objects.filter(showto=2).values()
         else:
-            updates = Updates.objects.all()
+            updates = Update.objects.all()
         serializer = UpdateSectionSerializer(updates, many=True)
         SerializerData = [serializer.data]
         return Response(SerializerData)
@@ -281,7 +281,7 @@ class UpdateSectionView(APIView):
         user = User.objects.get(userID=userID)
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
-        update = Updates.objects.get(id=pk)
+        update = Update.objects.get(id=pk)
         serializer = UpdateSectionSerializer(
             instance=update, data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -295,6 +295,6 @@ class UpdateSectionView(APIView):
         user = User.objects.get(userID=userID)
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
-        update = Updates.objects.get(id=pk)
+        update = Update.objects.get(id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
