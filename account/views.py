@@ -390,7 +390,7 @@ class UpdateSectionView(APIView):
   authentication_classes = [ JWTAuthentication ]
   permission_classes = [ IsAuthenticated ]
 
-  def get(self, request, id):
+  def get(self, request, pk):
       token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
       tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
       userID = tokenset['userID']
@@ -405,7 +405,7 @@ class UpdateSectionView(APIView):
       SerializerData = [serializer.data]
       return Response(SerializerData)
 
-  def post(self, request, id):
+  def post(self, request, pk):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
     tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
     userID = tokenset['userID']
@@ -419,15 +419,26 @@ class UpdateSectionView(APIView):
       serializer.save()
     return Response({'msg':'UPDATE ADDED'},  status=status.HTTP_200_OK)
     
-  def put(self, request, id):
+  def put(self, request, pk):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
     tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
     userID = tokenset['userID']
     user=User.objects.get(userID=userID)
     if not user.is_admin :
       return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
-    update = Updates.objects.get(id=id)
+    update = Updates.objects.get(id=pk)
     serializer = UpdateSectionSerializer(instance=update, data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return Response({'msg':'UPDATE is modified'},  status=status.HTTP_200_OK)
+
+  def delete(self, request, pk):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token,settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user=User.objects.get(userID=userID)
+    if not user.is_admin :
+      return Response({'msg':'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+    update = Updates.objects.get(id=pk)
+    update.delete()
+    return Response({'msg':'UPDATE is deleted'},  status=status.HTTP_200_OK)
