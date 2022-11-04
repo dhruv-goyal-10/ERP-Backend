@@ -26,42 +26,63 @@ class UserModelAdmin(BaseUserAdmin):
   filter_horizontal = ()
 
 
-# Now register the new UserModelAdmin...
-
 
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('userID','name', 'user','DOB')
     search_fields = ('name',)
-
+    
+class StudentInline(admin.TabularInline):
+    model = Student
+    extra = 0
 
 
 class TeacherAdmin(admin.ModelAdmin):
     list_display = ('userID','name', 'user','DOB')
     search_fields = ('name',)
+    
+class TeacherInline(admin.TabularInline):
+    model = Teacher
+    extra = 0
 
-
-class UpdatesAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title','description', 'showto')
-    search_fields = ('title',)
     
+class ClassAdmin(admin.ModelAdmin):
+    list_display = ('id', 'department', 'year', 'section')
+    search_fields = ('id', 'department__name', 'year', 'section')
+    ordering = ['department__name', 'year', 'section']
+    inlines = [StudentInline]
     
-class KlassAdmin(admin.ModelAdmin):
-    list_display = ('id', 'department', 'semester', 'section')
-    search_fields = ('id', 'department__name', 'semester', 'section')
-    ordering = ['department__name', 'semester', 'section']
-    
+class ClassInline(admin.TabularInline):
+    model = Class
+    extra = 0
     
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'id')
     search_fields = ('name', 'id')
     ordering = ['name']
+    inlines = [ClassInline, TeacherInline]
     
 
-admin.site.register(Subject)
-admin.site.register(AssignClass)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name', 'department')
+    search_fields = ('code', 'name', 'department__name')
+    ordering = ['department', 'code']
+    
+class AssignAdmin(admin.ModelAdmin):
+    list_display = ('class_id', 'subject', 'teacher')
+    search_fields = ('class_id__department__name', 'class_id__id', 'subject__name', 'teacher__name')
+    ordering = ['class_id__department__name', 'class_id__id', 'subject__id']
+    raw_id_fields = ['class_id', 'subject', 'teacher']
+    
+class UpdatesAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title','description', 'showto')
+    search_fields = ('title',)
+    
+
+admin.site.register(Subject, SubjectAdmin)
+admin.site.register(AssignClass, AssignAdmin)
 admin.site.register(User, UserModelAdmin)
 admin.site.register(Student, StudentAdmin)
 admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Department, DepartmentAdmin)
-admin.site.register(Klass, KlassAdmin)
+admin.site.register(Class, ClassAdmin)
 admin.site.register(Update, UpdatesAdmin)
