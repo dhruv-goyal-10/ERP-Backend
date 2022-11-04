@@ -6,14 +6,16 @@ from django.utils import timezone
 from django.conf import settings
 from . models import User
 
+
 class EMAIL:
     @staticmethod
     def send_otp_via_email(mailaddress):
-        otp = random.randint(1000,9999)
-        user = User.objects.get(email = mailaddress)
-        user=user.name
+        otp = random.randint(1000, 9999)
+        user = User.objects.get(email=mailaddress)
+        user = user.name
 
-        html_content = render_to_string("otp_template.html",{"otp": otp, "user": user})
+        html_content = render_to_string(
+            "otp_template.html", {"otp": otp, "user": user})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE PASSWORD RESET",
@@ -29,7 +31,8 @@ class EMAIL:
         user.save()
 
     def send_credentials_via_email(userID, password, name, mailaddress, designation):
-        html_content = render_to_string("newaccount_template.html",{"user": name, "userID": userID, "password":password, "designation":designation})
+        html_content = render_to_string("newaccount_template.html", {
+                                        "user": name, "userID": userID, "password": password, "designation": designation})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE ACCOUNT CREATED",
@@ -40,16 +43,15 @@ class EMAIL:
         email.attach_alternative(html_content, "text/html")
         email.send()
 
-
-
     def send_otp_for_email_verification(userID, mailaddress):
-        otp = random.randint(1000,9999)
-        user = User.objects.get(userID = userID)
+        otp = random.randint(1000, 9999)
+        user = User.objects.get(userID=userID)
         user.otp = otp
         user.otp_created_at = timezone.now()
         user.save()
-        user=user.name
-        html_content = render_to_string("email_verification.html",{"otp": otp, "user": user})
+        user = user.name
+        html_content = render_to_string("email_verification.html", {
+                                        "otp": otp, "user": user})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE MAIL VERIFICATION",
@@ -60,4 +62,3 @@ class EMAIL:
 
         email.attach_alternative(html_content, "text/html")
         email.send()
-
