@@ -70,7 +70,7 @@ class SubjectAdmin(admin.ModelAdmin):
 class AssignAdmin(admin.ModelAdmin):
     list_display = ('class_id', 'subject', 'teacher')
     search_fields = ('class_id__department__name', 'class_id__id', 'subject__name', 'teacher__name')
-    ordering = ['class_id__department__name', 'class_id__id', 'subject__id']
+    ordering = ['class_id__department__name', 'class_id__id', 'subject__code']
     raw_id_fields = ['class_id', 'subject', 'teacher']
     
 class UpdatesAdmin(admin.ModelAdmin):
