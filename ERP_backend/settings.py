@@ -196,13 +196,7 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    "https://erp-edumate.herokuapp.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://edumate-erp.netlify.app",
-    "https://erp-edumate.netlify.app",
-]
+CORS_ALLOW_ALL_ORIGINS=True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
