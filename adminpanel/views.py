@@ -21,11 +21,13 @@ class AddStudent(APIView):
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AddUserSerializer(data=request.data)
+        serializer = AddStudentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
+        sclass = serializer.data.get('assignedclass')
+        gender = serializer.data.get('sex')
 
         students = Student.objects.all()
         try:
@@ -42,6 +44,22 @@ class AddStudent(APIView):
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             pass
+
+        allclass = list(Class.objects.all())
+        for clas in allclass:
+            if sclass.lower()==clas.id.lower():
+                sclass=clas
+                break 
+        else:
+            return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if gender.lower() == 'm':
+            sex='Male'
+        elif gender.lower() == 'f':
+            sex = 'Female'
+        else:
+            return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
+
 
         try:
             EMAIL.send_credentials_via_email(
@@ -60,6 +78,8 @@ class AddStudent(APIView):
                 userID=userID,
                 name=name,
                 DOB=DOB,
+                class_id=sclass,
+                sex=sex
             ).save()
             return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
         except:
@@ -78,11 +98,13 @@ class AddTeacher(APIView):
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AddUserSerializer(data=request.data)
+        serializer = AddTeacherSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
+        sdepartment = serializer.data.get('department')
+        gender = serializer.data.get('sex')
 
         teachers = Teacher.objects.all()
         try:
@@ -99,6 +121,23 @@ class AddTeacher(APIView):
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             pass
+
+        alldepartments = list(Department.objects.all())
+        for dep in alldepartments:
+            if sdepartment.lower()==dep.id.lower():
+                sdepartment=dep
+                break 
+        else:
+            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if gender.lower() == 'm':
+            sex='Male'
+        elif gender.lower() == 'f':
+            sex = 'Female'
+        else:
+            return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
+
+
         try:
             EMAIL.send_credentials_via_email(
                 userID, password, name, email, 'teacher')
@@ -116,6 +155,8 @@ class AddTeacher(APIView):
                 userID=userID,
                 name=name,
                 DOB=DOB,
+                department=sdepartment,
+                sex=sex
             ).save()
             return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
         except:
