@@ -29,19 +29,11 @@ class ChangePasswordSerializer(serializers.Serializer):
   confirmpassword = serializers.CharField(min_length=8, max_length=255)
 
 
-class AddTeacherSerializer(serializers.Serializer):
+class AddUserSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)
   name = serializers.CharField(max_length=255)
   DOB = serializers.DateField()
-  department = serializers.CharField(max_length=255)
-  sex = serializers.CharField(max_length=1)
 
-class AddStudentSerializer(serializers.Serializer):
-  email = serializers.EmailField(max_length=255)
-  name = serializers.CharField(max_length=255)
-  DOB = serializers.DateField()
-  assignedclass = serializers.CharField(max_length=10)
-  sex = serializers.CharField(max_length=1)
 
 class UpdatePasswordSerializer(serializers.Serializer):
   prevpassword = serializers.CharField(min_length=8, max_length=255)

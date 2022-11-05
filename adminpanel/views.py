@@ -13,6 +13,25 @@ class AddStudent(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
+        user = User.objects.get(userID=userID)
+        if not user.is_admin:
+            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+        allclasses = list(Class.objects.all())
+        dic={}
+        for clas in allclasses:
+            dic[(clas.year, clas.department.name, clas.section)]=clas.id
+        sortedclasses = list(dic.keys())
+        sortedclasses.sort()
+        tdic={}
+        for key in sortedclasses:
+            tdic[dic[key]]=key
+        return Response(tdic, status=status.HTTP_200_OK)
+
+
     def post(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
@@ -21,13 +40,13 @@ class AddStudent(APIView):
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AddStudentSerializer(data=request.data)
+        serializer = AddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
-        sclass = serializer.data.get('assignedclass')
-        gender = serializer.data.get('sex')
+        sclass = request.data.get('assignedclass')
+        gender = request.data.get('sex')
 
         students = Student.objects.all()
         try:
@@ -45,21 +64,22 @@ class AddStudent(APIView):
         except:
             pass
 
-        allclass = list(Class.objects.all())
-        for clas in allclass:
-            if sclass.lower()==clas.id.lower():
-                sclass=clas
-                break 
-        else:
-            return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if sclass is not None:
+            allclass = list(Class.objects.all())
+            for clas in allclass:
+                if sclass.lower()==clas.id.lower():
+                    sclass=clas
+                    break 
+            else:
+                return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if gender.lower() == 'm':
-            sex='Male'
-        elif gender.lower() == 'f':
-            sex = 'Female'
-        else:
-            return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
-
+        if gender is not None:
+            if gender.lower() == 'm':
+                sex='Male'
+            elif gender.lower() == 'f':
+                sex = 'Female'
+            else:
+                return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             EMAIL.send_credentials_via_email(
@@ -72,15 +92,18 @@ class AddStudent(APIView):
             user.set_password(password)
             user.is_stu = True
             user.save()
-
             Student(
                 user=user,
                 userID=userID,
                 name=name,
                 DOB=DOB,
-                class_id=sclass,
-                sex=sex
             ).save()
+            curstu=Student.objects.get(userID = userID)
+            if sclass is not None:
+                curstu.class_id=sclass 
+            if gender is not None:
+                curstu.sex = sex
+            curstu.save()
             return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
@@ -90,6 +113,20 @@ class AddTeacher(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
+        user = User.objects.get(userID=userID)
+        if not user.is_admin:
+            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+        alldepartments = list(Department.objects.all())
+        dict = {}
+        for dep in alldepartments:
+            dict[dep.id]=dep.name
+        return Response(dict, status=status.HTTP_200_OK)
+
+
     def post(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
@@ -98,13 +135,13 @@ class AddTeacher(APIView):
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AddTeacherSerializer(data=request.data)
+        serializer = AddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
-        sdepartment = serializer.data.get('department')
-        gender = serializer.data.get('sex')
+        sdepartment = request.data.get('department')
+        gender = request.data.get('sex')
 
         teachers = Teacher.objects.all()
         try:
@@ -122,20 +159,22 @@ class AddTeacher(APIView):
         except:
             pass
 
-        alldepartments = list(Department.objects.all())
-        for dep in alldepartments:
-            if sdepartment.lower()==dep.id.lower():
-                sdepartment=dep
-                break 
-        else:
-            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if sdepartment is not None:
+            alldepartments = list(Department.objects.all())
+            for dep in alldepartments:
+                if sdepartment.lower()==dep.id.lower():
+                    sdepartment=dep
+                    break 
+            else:
+                return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if gender.lower() == 'm':
-            sex='Male'
-        elif gender.lower() == 'f':
-            sex = 'Female'
-        else:
-            return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
+        if gender is not None:
+            if gender.lower() == 'm':
+                sex='Male'
+            elif gender.lower() == 'f':
+                sex = 'Female'
+            else:
+                return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
 
 
         try:
@@ -154,10 +193,14 @@ class AddTeacher(APIView):
                 user=user,
                 userID=userID,
                 name=name,
-                DOB=DOB,
-                department=sdepartment,
-                sex=sex
+                DOB=DOB
             ).save()
+            curtea=Teacher.objects.get(userID = userID)
+            if sdepartment is not None:
+                curtea.class_id=sdepartment
+            if gender is not None:
+                curtea.sex = sex
+            curtea.save()
             return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
