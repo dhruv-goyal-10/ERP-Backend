@@ -16,12 +16,6 @@ class AddStudent(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
         allclasses = list(Class.objects.all())
         dic={}
         for clas in allclasses:
@@ -221,3 +215,55 @@ class Departments(APIView):
         department = Department.objects.get(id=id)
         department.delete()
         return Response({'msg': 'Department deleted successfully'},  status=status.HTTP_200_OK)
+
+
+class ClassObject(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request, id):
+        if id=='ALL':
+            allclasses = list(Class.objects.all())
+            dic={}
+            for clas in allclasses:
+                dic[(clas.year, clas.department.name, clas.section)]=clas.id
+            sortedclasses = list(dic.keys())
+            sortedclasses.sort()
+            tdic={}
+            for key in sortedclasses:
+                tdic[dic[key]]=key
+            return Response(tdic, status=status.HTTP_200_OK)
+        else:
+            classes = Class.objects.get(id=id) 
+            serializer = ClassSerializer(classes, many=False)
+            return Response(serializer.data)
+
+    def post(self, request, id):
+        serializer = ClassSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        cid = serializer.data.get('id')
+        year = serializer.data.get('year')
+        sdepartment = serializer.data.get('department')
+        section = request.data.get('section')
+        print(sdepartment)
+        if sdepartment is not None:
+            alldepartments = list(Department.objects.all())
+            for dep in alldepartments:
+                if sdepartment.lower()==dep.id.lower():
+                    sdepartment=dep
+                    break 
+            else:
+                return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        Class(
+                id=cid,
+                year=year,
+                section=section
+            ).save()
+
+        curclass = Class.objects.get(id = cid)
+        if sdepartment is not None:
+            curclass = sdepartment
+        curclass.save()
+
+        return Response({'msg': 'Class added successfully'},  status=status.HTTP_200_OK)
