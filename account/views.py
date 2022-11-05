@@ -11,7 +11,19 @@ from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import jwt
+from rest_framework.permissions import BasePermission
 
+
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        if not request.method =='GET':
+            token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+            tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            userID = tokenset['userID']
+            user = User.objects.get(userID=userID)
+            print(user)
+            return user.is_admin
+        return True
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -241,7 +253,7 @@ class UpdateEmail(APIView):
 
 class UpdateSectionView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request, pk):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -261,12 +273,12 @@ class UpdateSectionView(APIView):
         return Response(SerializerData)
 
     def post(self, request, pk):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+        # token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        # tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        # userID = tokenset['userID']
+        # user = User.objects.get(userID=userID)
+        # if not user.is_admin:
+        #     return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = UpdateSectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -275,12 +287,6 @@ class UpdateSectionView(APIView):
         return Response({'msg': 'UPDATE ADDED'},  status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
         update = Update.objects.get(id=pk)
         serializer = UpdateSectionSerializer(
             instance=update, data=request.data)
@@ -289,12 +295,12 @@ class UpdateSectionView(APIView):
         return Response({'msg': 'UPDATE is modified'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
+        # token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        # tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        # userID = tokenset['userID']
+        # user = User.objects.get(userID=userID)
+        # if not user.is_admin:
+        #     return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
         update = Update.objects.get(id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
