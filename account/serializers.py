@@ -49,5 +49,5 @@ class StudentProfileSerializer(ModelSerializer):
 class UpdateSectionSerializer(ModelSerializer):
 
   class Meta:
-    model = Updates
+    model = Update
     fields = '__all__'
