@@ -5,13 +5,15 @@ from account.serializers import *
 from account.models import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
-import jwt
 from account.emails import *
+from .serializers import *
+from adminpanel.permissions import *
+
 
 
 class AddStudent(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -33,12 +35,6 @@ class AddStudent(APIView):
 
 
     def post(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = AddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -111,29 +107,16 @@ class AddStudent(APIView):
 
 class AddTeacher(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
         alldepartments = list(Department.objects.all())
         dict = {}
         for dep in alldepartments:
             dict[dep.id]=dep.name
         return Response(dict, status=status.HTTP_200_OK)
 
-
     def post(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
-        if not user.is_admin:
-            return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = AddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -204,3 +187,37 @@ class AddTeacher(APIView):
             return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+class Departments(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+    
+    def get(self, request, id):
+        if id == 'ALL':
+            departments = Department.objects.all()
+            serializer = DepartmentSerializer(departments, many=True)
+        else:
+            departments = Department.objects.get(id=id) 
+            serializer = DepartmentSerializer(departments, many=False)
+        return Response(serializer.data)
+
+    def post(self, request, id):
+        serializer = DepartmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'msg': 'Department added successfully'},  status=status.HTTP_200_OK)
+        
+    def put(self, request, id):
+        department = Department.objects.get(id=id)
+        serializer = DepartmentSerializer(
+            instance=department, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
+    
+    def delete(self, request, id):
+        department = Department.objects.get(id=id)
+        department.delete()
+        return Response({'msg': 'Department deleted successfully'},  status=status.HTTP_200_OK)
