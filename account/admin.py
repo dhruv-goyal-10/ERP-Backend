@@ -26,7 +26,6 @@ class UserModelAdmin(BaseUserAdmin):
   filter_horizontal = ()
 
 
-
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('userID','name', 'user','DOB')
     search_fields = ('name',)
@@ -54,18 +53,19 @@ class ClassAdmin(admin.ModelAdmin):
 class ClassInline(admin.TabularInline):
     model = Class
     extra = 0
+
+class MembershipInline(admin.TabularInline):
+    model = Subject.department.through
+    
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name')
+    search_fields = ('code', 'name', 'department__name')
     
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'id')
     search_fields = ('name', 'id')
     ordering = ['name']
-    inlines = [ClassInline, TeacherInline]
-    
-
-class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'department')
-    search_fields = ('code', 'name', 'department__name')
-    ordering = ['department', 'code']
+    inlines = [ClassInline, TeacherInline, MembershipInline]
     
 class AssignAdmin(admin.ModelAdmin):
     list_display = ('class_id', 'subject', 'teacher')
@@ -76,7 +76,6 @@ class AssignAdmin(admin.ModelAdmin):
 class UpdatesAdmin(admin.ModelAdmin):
     list_display = ('id', 'title','description', 'showto')
     search_fields = ('title',)
-    
 
 admin.site.register(Subject, SubjectAdmin)
 admin.site.register(AssignClass, AssignAdmin)

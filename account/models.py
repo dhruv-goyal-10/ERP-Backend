@@ -123,7 +123,7 @@ class Class(models.Model):
         verbose_name_plural = 'Classes'
         
 class Subject(models.Model):
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    department = models.ManyToManyField(Department)
     code = models.CharField(primary_key='True', max_length=50)
     name = models.CharField(max_length=50)
     def __str__(self):
