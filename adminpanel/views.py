@@ -40,7 +40,7 @@ class AddStudent(APIView):
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AddStudentSerializer(data=request.data)
+        serializer = AddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
@@ -82,8 +82,8 @@ class AddStudent(APIView):
                 return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # EMAIL.send_credentials_via_email(
-                # userID, password, name, email, 'student')
+            EMAIL.send_credentials_via_email(
+                userID, password, name, email, 'student')
             user = User.objects.create_user(
                 email=email,
                 userID=userID,
@@ -91,18 +91,19 @@ class AddStudent(APIView):
             )
             user.set_password(password)
             user.is_stu = True
-            # user.save()
-            print(sclass,gender)
+            user.save()
             Student(
                 user=user,
                 userID=userID,
                 name=name,
                 DOB=DOB,
-                class_id=sclass,
-                sex=sex
             ).save()
-        
-
+            curstu=Student.objects.get(userID = userID)
+            if sclass is not None:
+                curstu.class_id=sclass 
+            if gender is not None:
+                curstu.sex = sex
+            curstu.save()
             return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
@@ -134,13 +135,13 @@ class AddTeacher(APIView):
         if not user.is_admin:
             return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AddTeacherSerializer(data=request.data)
+        serializer = AddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
-        sdepartment = serializer.data.get('department')
-        gender = serializer.data.get('sex')
+        sdepartment = request.data.get('department')
+        gender = request.data.get('sex')
 
         teachers = Teacher.objects.all()
         try:
@@ -192,10 +193,14 @@ class AddTeacher(APIView):
                 user=user,
                 userID=userID,
                 name=name,
-                DOB=DOB,
-                department=sdepartment,
-                sex=sex
+                DOB=DOB
             ).save()
+            curtea=Teacher.objects.get(userID = userID)
+            if sdepartment is not None:
+                curtea.class_id=sdepartment
+            if gender is not None:
+                curtea.sex = sex
+            curtea.save()
             return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
