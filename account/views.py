@@ -21,7 +21,6 @@ class IsAdmin(BasePermission):
             tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             userID = tokenset['userID']
             user = User.objects.get(userID=userID)
-            print(user)
             return user.is_admin
         return True
 
