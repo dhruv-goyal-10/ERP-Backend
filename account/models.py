@@ -112,7 +112,7 @@ class Department(models.Model):
     
 class Class(models.Model):
     id = models.CharField(primary_key='True', max_length=100)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
     section = models.CharField(max_length=100)
     year = models.IntegerField()
     def __str__(self):

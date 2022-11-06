@@ -272,13 +272,6 @@ class UpdateSectionView(APIView):
         return Response(SerializerData)
 
     def post(self, request, pk):
-        # token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        # tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        # userID = tokenset['userID']
-        # user = User.objects.get(userID=userID)
-        # if not user.is_admin:
-        #     return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = UpdateSectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
@@ -294,12 +287,6 @@ class UpdateSectionView(APIView):
         return Response({'msg': 'UPDATE is modified'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        # token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        # tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        # userID = tokenset['userID']
-        # user = User.objects.get(userID=userID)
-        # if not user.is_admin:
-        #     return Response({'msg': 'NOT ALLOWED!'}, status=status.HTTP_400_BAD_REQUEST)
         update = Update.objects.get(id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
