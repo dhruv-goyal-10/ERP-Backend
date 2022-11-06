@@ -187,36 +187,39 @@ class Departments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     
-    def get(self, request, id):
-        if id == 'ALL':
+    def get(self, request, pk):
+        if pk == 'ALL':
             departments = Department.objects.all()
             serializer = DepartmentSerializer(departments, many=True)
         else:
-            departments = Department.objects.get(id=id) 
+            departments = Department.objects.get(id=pk) 
             serializer = DepartmentSerializer(departments, many=False)
         return Response(serializer.data)
 
-    def post(self, request, id):
+    def post(self, request, pk):
         serializer = DepartmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'Department added successfully'},  status=status.HTTP_200_OK)
         
-    def put(self, request, id):
+    def put(self, request, pk):
         try:
-            department = Department.objects.get(id=id)
+            department = Department.objects.get(id=pk)
         except:
             return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = DepartmentSerializer(
             instance=department, data=request.data)
         serializer.is_valid(raise_exception=True)
+        id = serializer.validated_data.get('id')
+        if(id != pk):
+            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
     
-    def delete(self, request, id):
+    def delete(self, request, pk):
         try:
-            department = Department.objects.get(id=id)
+            department = Department.objects.get(id=pk)
         except:
             return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         department.delete()
@@ -227,8 +230,8 @@ class ClassObject(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request, id):
-        if id=='ALL':
+    def get(self, request, pk):
+        if pk=='ALL':
             allclasses = list(Class.objects.all())
             dic={}
             for clas in allclasses:
@@ -240,62 +243,32 @@ class ClassObject(APIView):
                 tdic[dic[key]]=key
             return Response(tdic, status=status.HTTP_200_OK)
         else:
-            classes = Class.objects.get(id=id) 
+            classes = Class.objects.get(id=pk) 
             serializer = ClassSerializer(classes, many=False)
             return Response(serializer.data)
 
-    def post(self, request, id):
+    def post(self, request, pk):
         serializer = ClassSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        cid = serializer.data.get('id')
-        year = serializer.data.get('year')
-        section = serializer.data.get('section')
-        sdepartment = request.data.get('department')
-        if sdepartment is not None:
-            alldepartments = list(Department.objects.all())
-            for dep in alldepartments:
-                if sdepartment.lower()==dep.id.lower():
-                    sdepartment=dep
-                    break 
-            else:
-                return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-
-        Class(
-                id=cid,
-                year=year,
-                section=section
-            ).save()
-        curclass = Class.objects.get(id = cid)
-        if sdepartment is not None:
-            curclass.department = sdepartment
-        curclass.save()
-
+        serializer.save()
         return Response({'msg': 'Class added successfully'},  status=status.HTTP_200_OK)
 
-    def put(self, request, id):
+    def put(self, request, pk):
         try:
-            clas = Class.objects.get(id=id)
+            clas = Class.objects.get(id=pk)
         except:
             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = ClassSerializer(instance=clas, data=request.data)
         serializer.is_valid(raise_exception=True)
+        id = serializer.validated_data.get('id')
+        if(id != pk):
+            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        sdepartment = request.data.get('department')
-        if sdepartment is not None:
-            alldepartments = list(Department.objects.all())
-            for dep in alldepartments:
-                if sdepartment.lower()==dep.id.lower():
-                    sdepartment=dep
-                    break 
-            else:
-                return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-            clas.department = sdepartment
-            clas.save()
         return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)   
 
-    def delete(self, request, id):
+    def delete(self, request, pk):
         try:
-            clas = Class.objects.get(id=id)
+            clas = Class.objects.get(id=pk)
         except:
             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         clas.delete()

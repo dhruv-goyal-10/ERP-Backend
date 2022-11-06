@@ -13,4 +13,4 @@ class DepartmentSerializer(ModelSerializer):
 class ClassSerializer(ModelSerializer):
     class Meta:
         model = Class
-        fields = ['id', 'year', 'section']
+        fields = '__all__'
