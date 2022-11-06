@@ -274,3 +274,25 @@ class ClassObject(APIView):
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
         
+
+# class TeacherOfClass(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated, IsAdmin]
+
+#     def post(self, request):
+#         serializer = ClassIdSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         classid = serializer.data.get('id')
+#         try:
+#             clas = Class.objects.get(id=classid)
+#         except:
+#             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+#         classdetails = {'department': clas.department.name,
+#                         'year': clas.year, 'section': clas.section}
+#         teachers = Teacher.objects.all()
+#         dict = {}
+#         for teacher in teachers:
+#             if (teacher.class_id.id) == classid:
+#                 dict[teacher.userID] = teacher.name
+#         response = {"classdetails": classdetails, "students": dict}
+#         return Response(response, status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.urls import path
+from teacher.views import *
 
 urlpatterns = [
-    # path('', ),
+    path('studentinclass/', StudentInClass.as_view(), name='studentclassfilter')
 ]
