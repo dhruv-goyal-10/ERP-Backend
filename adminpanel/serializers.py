@@ -14,3 +14,8 @@ class ClassSerializer(ModelSerializer):
     class Meta:
         model = Class
         fields = '__all__'
+        
+class SubjectSerializer(ModelSerializer):
+    class Meta:
+        model = Subject
+        fields = '__all__'
