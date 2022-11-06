@@ -1,6 +1,7 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from teacher.views import *
 
 urlpatterns = [
-    # path('', ),
+    path('subjectsindepartment/<str:pk>/', SubjectsInDepartments.as_view(), name='subjectdepartmentfilter'),
+    path('teachersindepartment/<str:pk>/', TeachersInDepartments.as_view(), name='teacherdepartmentfilter'),
 ]
