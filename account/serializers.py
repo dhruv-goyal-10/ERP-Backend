@@ -52,3 +52,4 @@ class UpdateSectionSerializer(ModelSerializer):
   class Meta:
     model = Update
     fields = '__all__'
+

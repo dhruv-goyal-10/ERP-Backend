@@ -274,3 +274,19 @@ class ClassObject(APIView):
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
         
+
+class ClassByDepartment(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request, departmentid):
+        try:
+            print(departmentid)
+            dep = Department.objects.get(id = departmentid)
+        except:
+            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        allclasses = Class.objects.all().filter(department = dep)
+        dict={}
+        for clas in allclasses:
+            dict[clas.id]={"year":clas.year, "section" : clas.section}
+        return Response(dict,  status=status.HTTP_200_OK)
