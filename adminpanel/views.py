@@ -273,6 +273,7 @@ class ClassObject(APIView):
             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
+<<<<<<< HEAD
         
 
 class ClassByDepartment(APIView):
@@ -290,3 +291,47 @@ class ClassByDepartment(APIView):
         for clas in allclasses:
             dict[clas.id]={"year":clas.year, "section" : clas.section}
         return Response(dict,  status=status.HTTP_200_OK)
+=======
+    
+    
+class Subjects(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request, pk):
+        if pk == 'ALL':
+            subject = Subject.objects.all()
+            serializer = SubjectSerializer(subject, many=True)
+        else:
+            subject = Subject.objects.get(code=pk) 
+            serializer = SubjectSerializer(subject, many=False)
+        return Response(serializer.data)
+
+    def post(self, request, pk):
+        serializer = SubjectSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'msg': 'Subject added successfully'},  status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        try:
+            subject = Subject.objects.get(code=pk)
+        except:
+            return Response({'msg': 'Subject does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SubjectSerializer(instance=subject, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data.get('code')
+        if(code != pk):
+            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response({'msg': 'Subject modified successfully'},  status=status.HTTP_200_OK)   
+
+    def delete(self, request, pk):
+        try:
+            subject = Subject.objects.get(code=pk)
+        except:
+            return Response({'msg': 'Subject does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        subject.delete()
+        return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
+        
+>>>>>>> Subjects
