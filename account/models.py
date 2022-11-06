@@ -187,6 +187,30 @@ class AssignClass(models.Model):
     def __str__(self):
         return '%s' % (self.class_id)
 
+
+class TeacherFeedback(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    feed = models.IntegerField(default=3,validators=[MaxValueValidator(5), MinValueValidator(1)])
+    class Meta:
+        unique_together = (('student', 'teacher'),)
+        verbose_name_plural = 'Teacher Feedbacks'
+        
+    def __str__(self):
+        return '%s' % (self.teacher.name)
+
+
+class StudentFeedback(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    feed = models.IntegerField(default=3,validators=[MaxValueValidator(5), MinValueValidator(1)])
+    class Meta:
+        unique_together = (('student', 'teacher'),)
+        verbose_name_plural = 'Student Feedbacks'
+        
+    def __str__(self):
+        return '%s' % (self.student.name)
+
 class Update(models.Model):
     title = models.TextField()
     description = models.TextField()

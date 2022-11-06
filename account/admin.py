@@ -77,6 +77,19 @@ class UpdatesAdmin(admin.ModelAdmin):
     list_display = ('id', 'title','description', 'showto')
     search_fields = ('title',)
 
+
+class TeacherFeedbackAdmin(admin.ModelAdmin):
+    list_display = ('teacher', 'feed','student')
+    search_fields = ('teacher__name',)
+    ordering = [ 'teacher__name', 'feed']
+    
+
+class StudentFeedbackAdmin(admin.ModelAdmin):
+    list_display = ('student', 'feed','teacher')
+    search_fields = ('student__name',)
+    ordering = [ 'student__name', 'feed']
+
+
 admin.site.register(Subject, SubjectAdmin)
 admin.site.register(AssignClass, AssignAdmin)
 admin.site.register(User, UserModelAdmin)
@@ -85,3 +98,5 @@ admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Department, DepartmentAdmin)
 admin.site.register(Class, ClassAdmin)
 admin.site.register(Update, UpdatesAdmin)
+admin.site.register(TeacherFeedback, TeacherFeedbackAdmin)
+admin.site.register(StudentFeedback, StudentFeedbackAdmin)
