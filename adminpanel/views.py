@@ -273,7 +273,6 @@ class ClassObject(APIView):
             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
-<<<<<<< HEAD
         
 
 class ClassByDepartment(APIView):
@@ -291,7 +290,6 @@ class ClassByDepartment(APIView):
         for clas in allclasses:
             dict[clas.id]={"year":clas.year, "section" : clas.section}
         return Response(dict,  status=status.HTTP_200_OK)
-=======
     
     
 class Subjects(APIView):
@@ -334,4 +332,3 @@ class Subjects(APIView):
         subject.delete()
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
         
->>>>>>> Subjects
