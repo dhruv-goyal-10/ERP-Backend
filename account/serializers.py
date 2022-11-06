@@ -53,6 +53,3 @@ class UpdateSectionSerializer(ModelSerializer):
     model = Update
     fields = '__all__'
 
-
-class ClassIdSerializer(serializers.Serializer):
-    id = serializers.CharField(max_length=8)

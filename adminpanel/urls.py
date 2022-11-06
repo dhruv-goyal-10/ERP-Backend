@@ -7,6 +7,6 @@ urlpatterns = [
     path('addteacher/', AddTeacher.as_view(), name='addTeacher'),
     path('departments/<str:pk>/', Departments.as_view(), name='Departments'),
     path('classes/<str:pk>/', ClassObject.as_view(), name='Classes'),
-    path('teachersofclass/', TeacherOfClass.as_view(), name='teacherclassfilter')
+    path('classesindepartment/<str:departmentid>/', ClassByDepartment.as_view(), name='classdepartmentfilter')
     
 ]

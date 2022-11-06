@@ -275,24 +275,18 @@ class ClassObject(APIView):
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
         
 
-# class TeacherOfClass(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated, IsAdmin]
+class ClassByDepartment(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
-#     def post(self, request):
-#         serializer = ClassIdSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         classid = serializer.data.get('id')
-#         try:
-#             clas = Class.objects.get(id=classid)
-#         except:
-#             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-#         classdetails = {'department': clas.department.name,
-#                         'year': clas.year, 'section': clas.section}
-#         teachers = Teacher.objects.all()
-#         dict = {}
-#         for teacher in teachers:
-#             if (teacher.class_id.id) == classid:
-#                 dict[teacher.userID] = teacher.name
-#         response = {"classdetails": classdetails, "students": dict}
-#         return Response(response, status=status.HTTP_200_OK)
+    def get(self, request, departmentid):
+        try:
+            print(departmentid)
+            dep = Department.objects.get(id = departmentid)
+        except:
+            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        allclasses = Class.objects.all().filter(department = dep)
+        dict={}
+        for clas in allclasses:
+            dict[clas.id]={"year":clas.year, "section" : clas.section}
+        return Response(dict,  status=status.HTTP_200_OK)
