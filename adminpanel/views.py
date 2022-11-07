@@ -332,3 +332,49 @@ class Subjects(APIView):
         subject.delete()
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
         
+
+class FeedbackView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request, key):
+        resdict = {}
+        if key.lower() == 'teachers':
+            feedbacks = list(TeacherFeedback.objects.all())
+            for feedback in feedbacks:
+                try:
+                    resdict[feedback.teacher.name]+=[{feedback.student.name: feedback.feed}]
+                except:
+                    resdict[feedback.teacher.name]=[{feedback.student.name: feedback.feed}]
+        elif key.lower() == 'students':
+            feedbacks = list(StudentFeedback.objects.all())
+            for feedback in feedbacks:
+                try:
+                    resdict[feedback.student.name]+=[{feedback.teacher.name: feedback.feed}]
+                except:
+                    resdict[feedback.student.name]=[{feedback.teacher.name: feedback.feed}]
+        else:
+            try:
+                fuser = User.objects.get(userID = key)
+                stu=False 
+                tea=False 
+                try:
+                    student = Student.objects.get(userID = key)
+                    stu=True
+                except:
+                    teacher = Teacher.objects.get(userID = key)
+                    tea=True
+                if stu:
+                    feedbacks = list(StudentFeedback.objects.filter(student = student))
+                elif tea:
+                    feedbacks = list(TeacherFeedback.objects.filter(teacher = teacher))
+                else:
+                    return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
+                for feedback in feedbacks:
+                    if stu:
+                        resdict[feedback.teacher.name]=feedback.feed
+                    else:
+                        resdict[feedback.student.name]=feedback.feed
+            except:
+                return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
+        return Response(resdict,  status=status.HTTP_200_OK)
