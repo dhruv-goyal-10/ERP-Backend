@@ -4,6 +4,7 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone
 from datetime import timedelta
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
 
 #  Custom User Manager
 
@@ -225,11 +226,10 @@ class AssignTime(models.Model):
     assign = models.ForeignKey(AssignClass, on_delete=models.CASCADE)
     period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')
     day = models.CharField(max_length=15, choices=DAYS)
+    
+    def validate_unique(self, *args, **kwargs):
+        super(AssignTime, self).validate_unique(*args, **kwargs)
+        query = AssignTime.objects.filter(period=self.period,day=self.day)
+        if query.filter(assign__teacher=self.assign.teacher).exists():
+            raise ValidationError("Teacher is Busy")
 
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=['period', 'day', 'assign__teacher'], name='Teacher')
-    #     ]
-        
-    # class Meta:
-    #     unique_together = (('period', 'day', 'assign'),)
