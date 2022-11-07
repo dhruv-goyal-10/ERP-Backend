@@ -178,7 +178,7 @@ class Teacher(models.Model):
 class AssignClass(models.Model):
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name = "assignclass_teacher")
 
     class Meta:
         unique_together = (('subject', 'class_id', 'teacher'),)
@@ -225,8 +225,11 @@ class AssignTime(models.Model):
     assign = models.ForeignKey(AssignClass, on_delete=models.CASCADE)
     period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')
     day = models.CharField(max_length=15, choices=DAYS)
-    
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['period', 'day', 'assign__teacher'], name='')
-        ]
+
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(fields=['period', 'day', 'assign__teacher'], name='Teacher')
+    #     ]
+        
+    # class Meta:
+    #     unique_together = (('period', 'day', 'assign'),)
