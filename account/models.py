@@ -4,6 +4,7 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone
 from datetime import timedelta
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
 
 #  Custom User Manager
 
@@ -178,7 +179,7 @@ class Teacher(models.Model):
 class AssignClass(models.Model):
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name = "assignclass_teacher")
 
     class Meta:
         unique_together = (('subject', 'class_id', 'teacher'),)
@@ -198,3 +199,37 @@ class Update(models.Model):
 
     class Meta:
         ordering = ['-lastedit']
+        
+        
+TIME_SLOTS = (
+    ('7:30 - 8:30', '7:30 - 8:30'),
+    ('8:30 - 9:30', '8:30 - 9:30'),
+    ('9:30 - 10:30', '9:30 - 10:30'),
+    ('11:00 - 11:50', '11:00 - 11:50'),
+    ('11:50 - 12:40', '11:50 - 12:40'),
+    ('12:40 - 1:30', '12:40 - 1:30'),
+    ('2:30 - 3:30', '2:30 - 3:30'),
+    ('3:30 - 4:30', '3:30 - 4:30'),
+    ('4:30 - 5:30', '4:30 - 5:30'),
+)
+
+DAYS = (
+    ('Monday', 'Monday'),
+    ('Tuesday', 'Tuesday'),
+    ('Wednesday', 'Wednesday'),
+    ('Thursday', 'Thursday'),
+    ('Friday', 'Friday'),
+    ('Saturday', 'Saturday'),
+)
+
+class AssignTime(models.Model):
+    assign = models.ForeignKey(AssignClass, on_delete=models.CASCADE)
+    period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')
+    day = models.CharField(max_length=15, choices=DAYS)
+    
+    def validate_unique(self, *args, **kwargs):
+        super(AssignTime, self).validate_unique(*args, **kwargs)
+        query = AssignTime.objects.filter(period=self.period,day=self.day)
+        if query.filter(assign__teacher=self.assign.teacher).exists():
+            raise ValidationError("Teacher is Busy")
+
