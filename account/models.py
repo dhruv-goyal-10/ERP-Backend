@@ -198,3 +198,35 @@ class Update(models.Model):
 
     class Meta:
         ordering = ['-lastedit']
+        
+        
+TIME_SLOTS = (
+    ('7:30 - 8:30', '7:30 - 8:30'),
+    ('8:30 - 9:30', '8:30 - 9:30'),
+    ('9:30 - 10:30', '9:30 - 10:30'),
+    ('11:00 - 11:50', '11:00 - 11:50'),
+    ('11:50 - 12:40', '11:50 - 12:40'),
+    ('12:40 - 1:30', '12:40 - 1:30'),
+    ('2:30 - 3:30', '2:30 - 3:30'),
+    ('3:30 - 4:30', '3:30 - 4:30'),
+    ('4:30 - 5:30', '4:30 - 5:30'),
+)
+
+DAYS = (
+    ('Monday', 'Monday'),
+    ('Tuesday', 'Tuesday'),
+    ('Wednesday', 'Wednesday'),
+    ('Thursday', 'Thursday'),
+    ('Friday', 'Friday'),
+    ('Saturday', 'Saturday'),
+)
+
+class AssignTime(models.Model):
+    assign = models.ForeignKey(AssignClass, on_delete=models.CASCADE)
+    period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')
+    day = models.CharField(max_length=15, choices=DAYS)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['period', 'day', 'assign__teacher'], name='')
+        ]
