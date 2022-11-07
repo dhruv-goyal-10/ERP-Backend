@@ -31,7 +31,7 @@ class StudentInClass(APIView):
 
 class TeacherOfClass(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, classid):
         try:
@@ -73,3 +73,33 @@ class TeachersInDepartments(APIView):
         teachers =Teacher.objects.filter(department__id=pk)
         serializer =TeacherSectionSerializer(teachers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StudentFeedbackView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, student):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
+        try:
+            teacher = Teacher.objects.get(userID=userID)
+        except:
+            return Response({'msg': 'NOT ALLOWED'},  status=status.HTTP_400_BAD_REQUEST)
+        try:
+            student = Student.objects.get(userID=student)
+        except:
+            return Response({'msg': 'student does not exist'},  status=status.HTTP_400_BAD_REQUEST)
+        feed = request.data.get('feed')
+        if feed is None:
+            feed = 3
+        try:
+            StudentFeedback(
+                teacher = teacher,
+                student = student,
+                feed = feed
+            ).save()
+        except:
+            return Response({'msg': 'already submitted'},  status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
