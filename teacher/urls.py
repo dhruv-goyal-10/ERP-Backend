@@ -8,6 +8,5 @@ urlpatterns = [
     path('subjectsindepartment/<str:pk>/', SubjectsInDepartments.as_view(), name='subjectdepartmentfilter'),
     path('teachersindepartment/<str:pk>/', TeachersInDepartments.as_view(), name='teacherdepartmentfilter'),
     path('studentfeedback/<str:student>/', StudentFeedbackView.as_view(), name='studentfeedback'),
+    path('classofteacher/<str:teacherid>/', ClassOfTeacher.as_view(), name='classofteacherfilter'),
 ]
-
-

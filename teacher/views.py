@@ -82,6 +82,23 @@ class TeacherOfClass(APIView):
         response = {"classdetails": classdetails, "teachers": arr}
         return Response(response, status=status.HTTP_200_OK)
 
+class ClassOfTeacher(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+
+    def get(self, request, teacherid):
+        try:
+            teacher = Teacher.objects.get(userID=teacherid)
+        except:
+            return Response({'msg': 'Teacher does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        assignedclasses = AssignClass.objects.all().filter(teacher = teacher)
+        arr=[]
+        for assignedclass in assignedclasses:
+            arr+=[assignedclass.class_id.id]
+        arr=set(arr)
+        response = {"classes":arr}
+        return Response(response, status=status.HTTP_200_OK)
+
 class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]

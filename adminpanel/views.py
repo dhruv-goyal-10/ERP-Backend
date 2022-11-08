@@ -155,8 +155,8 @@ class AddTeacher(APIView):
 
 
         try:
-            EMAIL.send_credentials_via_email(
-                userID, password, name, email, 'teacher')
+            # EMAIL.send_credentials_via_email(
+            #     userID, password, name, email, 'teacher')
             user = User.objects.create_user(
                 email=email,
                 userID=userID,
