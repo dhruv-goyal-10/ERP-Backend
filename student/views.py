@@ -78,6 +78,10 @@ class TeacherFeedbackView(APIView):
             ).save()
             return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
     
+TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
+
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -87,16 +91,19 @@ class TimeTable(APIView):
         if(pk is False):
             return Response({'msg': 'Invalid credentials'},  status=status.HTTP_200_OK)
         pk = pk.class_id.id
-        times = AssignTime.objects.filter(assign__class_id=pk)
-        classes = AssignClass.objects.filter(class_id=pk)
+        
         list = []
-        for klass in classes:
-            dict={}
-            dict= {"class" : klass.class_id.id, "subject" : klass.subject.name, "teacher" : klass.teacher.name}
-            for time in times:
-                ndict=dict.copy()
-                if time.assign.id == klass.id:
-                    ndict|= {"period" : time.period, "day" : time.day}
-                    list.append(ndict)
+        for i in TIME_SLOTS:
+            for j in DAYS:
+                time=AssignTime.objects.filter(period=i, day=j, assign__class_id= pk)
+                
+                if time.exists():
+                    time=time[0]
+                    dict={}
+                    dict= {"class" : time.assign.class_id.id, "subject" : time.assign.subject.name, "teacher" : time.assign.teacher.name, "period" : i, "day" : j}
+                else:
+                    dict={}
+                    dict= {"class" : pk, "subject" : "", "teacher" : "", "period" : i, "day" : j}
+                list.append(dict)            
         return Response(list,  status=status.HTTP_200_OK)
 
