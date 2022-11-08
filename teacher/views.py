@@ -53,7 +53,7 @@ class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, classid):
+    def get(self, request, classid, feedback='defaultvalue'):
         try:
             clas = Class.objects.get(id=classid)
         except:
@@ -65,7 +65,11 @@ class StudentInClass(APIView):
         for student in students:
             if (student.class_id.id) == classid:
                 dict[student.userID] = student.name
-        response = {"classdetails": classdetails, "students": dict}
+        if feedback=='feedback':
+            feedbacks = StudentFeedback.objects.filter()
+            response = {}
+        else:
+            response = {"classdetails": classdetails, "students": dict}
         return Response(response, status=status.HTTP_200_OK)
 
 

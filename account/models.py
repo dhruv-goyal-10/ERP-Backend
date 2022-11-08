@@ -131,13 +131,13 @@ class Subject(models.Model):
         return self.name
     
 class Student(models.Model):
-    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
-    class_id = models.ForeignKey(Class, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    class_id = models.ForeignKey(Class, on_delete=models.CASCADE)
     userID = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
     sex = models.CharField(
         max_length=10, choices=sex_choice, blank=True, null=True)
-    DOB = models.DateField(blank=True, null=True)
+    DOB = models.DateField()
 
     picture = models.ImageField(upload_to='students/', default='', height_field=None,
                                 width_field=None, max_length=100, blank=True, null=True)
@@ -163,13 +163,13 @@ class Student(models.Model):
 
 
 class Teacher(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
     userID = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     sex = models.CharField(
         max_length=10, choices=sex_choice, blank=True, null=True)
-    DOB = models.DateField(blank=True, null=True)
+    DOB = models.DateField()
     picture = models.ImageField(upload_to='teachers/', height_field=None,width_field=None, max_length=100, blank=True, null=True)
     blood_group = models.CharField(max_length=20, blank=True, null=True)
     pincode = models.IntegerField(blank=True, null=True)
