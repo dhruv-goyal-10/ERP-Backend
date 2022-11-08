@@ -261,10 +261,10 @@ class UpdateSectionView(APIView):
         who = userID//100000
         if who == 2:
             updates = Update.objects.filter(showto=3).values(
-            ) | Update.objects.filter(showto=1).values()
+            ) | Update.objects.filter(showto=2).values()
         elif who == 1:
             updates = Update.objects.filter(showto=3).values(
-            ) | Update.objects.filter(showto=2).values()
+            ) | Update.objects.filter(showto=1).values()
         else:
             updates = Update.objects.all()
         serializer = UpdateSectionSerializer(updates, many=True)
