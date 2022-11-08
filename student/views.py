@@ -42,3 +42,21 @@ class ProfileDetails(APIView):
         user.save()
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    
+class TimeTable(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, pk):
+        times = AssignTime.objects.filter(assign__class_id=pk)
+        classes = AssignClass.objects.filter(class_id=pk)
+        list = []
+        for klass in classes:
+            dict={}
+            dict= {"class" : klass.class_id.id, "subject" : klass.subject.name, "teacher" : klass.teacher.name}
+            for time in times:
+                if time.assign.id == klass.id:
+                    dict|= {"period" : time.period, "day" : time.day}
+            list.append(dict)
+        return Response(list,  status=status.HTTP_200_OK)
+

@@ -73,3 +73,27 @@ class TeachersInDepartments(APIView):
         teachers =Teacher.objects.filter(department__id=pk)
         serializer =TeacherSectionSerializer(teachers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+class TimeTable(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, pk):
+        times = AssignTime.objects.filter(assign__class_id=pk)
+        # print(times)
+        classes = AssignClass.objects.filter(class_id=pk)
+        list = []
+        # print("hello")
+        for klass in classes:
+            dict={}
+            dict= {"class" : klass.class_id.id, "subject" : klass.subject.name, "teacher" : klass.teacher.name}
+            for time in times:
+                ndict={}
+                ndict=dict
+                if time.assign.id == klass.id:
+                    ndict|= {"period" : time.period, "day" : time.day}
+                    print(ndict)
+                    list.append(ndict)
+            list.append(dict)
+        return Response(list,  status=status.HTTP_200_OK)
