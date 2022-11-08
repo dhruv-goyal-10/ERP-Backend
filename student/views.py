@@ -83,8 +83,10 @@ class TimeTable(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        
-        pk = check_if_student_and_return_userID(request).class_id.id
+        pk = check_if_student_and_return_userID(request)
+        if(pk is False):
+            return Response({'msg': 'Invalid credentials'},  status=status.HTTP_200_OK)
+        pk = pk.class_id.id
         times = AssignTime.objects.filter(assign__class_id=pk)
         classes = AssignClass.objects.filter(class_id=pk)
         list = []
@@ -92,7 +94,7 @@ class TimeTable(APIView):
             dict={}
             dict= {"class" : klass.class_id.id, "subject" : klass.subject.name, "teacher" : klass.teacher.name}
             for time in times:
-                ndict=dict
+                ndict=dict.copy()
                 if time.assign.id == klass.id:
                     ndict|= {"period" : time.period, "day" : time.day}
                     list.append(ndict)

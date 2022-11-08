@@ -8,14 +8,22 @@ from rest_framework.permissions import IsAuthenticated
 from account.emails import *
 from .permissions import *
 
+def check_if_teacher_and_return_userID(request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    try:
+        teacher = Teacher.objects.get(userID=userID)
+        return teacher
+    except:
+        return False
+
 class TProfileDetails(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
+        userID = check_if_teacher_and_return_userID(request).userID
 
         teacher = Teacher.objects.get(userID=userID)
         serializer = TeacherProfileSerializer(teacher, many=False)
@@ -26,9 +34,7 @@ class TProfileDetails(APIView):
         return Response(serializer.data | eserializer.data)
 
     def put(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
+        userID = check_if_teacher_and_return_userID(request).userID
         teacher = Teacher.objects.get(userID=userID)
         serializer = TeacherProfileSerializer(teacher, data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -108,18 +114,6 @@ class TeachersInDepartments(APIView):
         serializer =TeacherSectionSerializer(teachers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-def check_if_teacher_and_return_userID(request):
-    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-    tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-    userID = tokenset['userID']
-    try:
-        teacher = Teacher.objects.get(userID=userID)
-        return teacher
-    except:
-        return False
-
-
 class StudentFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -154,21 +148,20 @@ class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
-    def get(self, request, pk):
-        times = AssignTime.objects.filter(assign__class_id=pk)
-        # print(times)
-        classes = AssignClass.objects.filter(class_id=pk)
+    def get(self, request):
+        pk = check_if_teacher_and_return_userID(request)
+        if(pk is False):
+            return Response({'msg': 'Invalid credentials'},  status=status.HTTP_200_OK)
+        pk=pk.userID
+        classes = AssignClass.objects.filter(teacher__userID = pk)
         list = []
-        # print("hello")
         for klass in classes:
             dict={}
             dict= {"class" : klass.class_id.id, "subject" : klass.subject.name, "teacher" : klass.teacher.name}
+            times = AssignTime.objects.filter(assign__id=klass.id)
             for time in times:
-                ndict={}
-                ndict=dict
+                ndict=dict.copy()
                 if time.assign.id == klass.id:
                     ndict|= {"period" : time.period, "day" : time.day}
-                    print(ndict)
                     list.append(ndict)
-            list.append(dict)
         return Response(list,  status=status.HTTP_200_OK)
