@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 import jwt
 from django.conf import settings
 
-class ProfileDetails(APIView):
+class SProfileDetails(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 

@@ -43,8 +43,13 @@ class UpdatePasswordSerializer(serializers.Serializer):
 class StudentProfileSerializer(ModelSerializer):
     class Meta:
         model = Student
-        fields = ['name', 'sex', 'DOB', 'userID', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state',
+        fields = ['name', 'sex', 'DOB', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state',
                   'student_phone', 'father_name', 'father_phone', 'mother_name', 'mother_phone',]
+
+class TeacherProfileSerializer(ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['name', 'sex', 'DOB', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state','teacher_phone']
 
 
 class UpdateSectionSerializer(ModelSerializer):

@@ -170,8 +170,13 @@ class Teacher(models.Model):
     sex = models.CharField(
         max_length=10, choices=sex_choice, blank=True, null=True)
     DOB = models.DateField(blank=True, null=True)
-    pic = models.ImageField(upload_to='teachers/', height_field=None,
-                            width_field=None, max_length=100, blank=True, null=True)
+    picture = models.ImageField(upload_to='teachers/', height_field=None,width_field=None, max_length=100, blank=True, null=True)
+    blood_group = models.CharField(max_length=20, blank=True, null=True)
+    pincode = models.IntegerField(blank=True, null=True)
+    address = models.CharField(max_length=200, blank=True, null=True)
+    city = models.CharField(max_length=200, blank=True, null=True)
+    state = models.CharField(max_length=200, blank=True, null=True)
+    teacher_phone = models.BigIntegerField(blank=True, null=True, validators=[MinValueValidator(1000000000), MaxValueValidator(9999999999)])
 
     def __str__(self):
         return self.name
