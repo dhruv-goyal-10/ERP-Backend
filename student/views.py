@@ -43,17 +43,24 @@ class ProfileDetails(APIView):
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
+def check_if_student_and_return_userID(request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    try:
+        student = Student.objects.get(userID=userID)
+        return student
+    except:
+        return False
+
 class TeacherFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, teacher):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        try:
-            student = Student.objects.get(userID=userID)
-        except:
+
+    def put(self, request, teacher):
+        student = check_if_student_and_return_userID(request)
+        if not student:
             return Response({'msg': 'NOT ALLOWED'},  status=status.HTTP_400_BAD_REQUEST)
         try:
             teacher = Teacher.objects.get(userID=teacher)
@@ -63,11 +70,14 @@ class TeacherFeedbackView(APIView):
         if feed is None:
             feed = 3
         try:
+            feedback = TeacherFeedback.objects.get(teacher=teacher, student = student)
+            feedback.feed=feed
+            feedback.save()
+            return Response({'msg': 'Feedback Modified Successfully !!'}, status=status.HTTP_200_OK)
+        except:
             TeacherFeedback(
                 teacher = teacher,
                 student = student,
                 feed = feed
             ).save()
-        except:
-            return Response({'msg': 'already submitted'},  status=status.HTTP_400_BAD_REQUEST)
-        return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
+            return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
