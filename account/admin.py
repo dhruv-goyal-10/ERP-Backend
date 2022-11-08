@@ -54,6 +54,10 @@ class ClassInline(admin.TabularInline):
     model = Class
     extra = 0
 
+class AssignTimeInline(admin.TabularInline):
+    model = AssignTime
+    extra = 0
+
 class MembershipInline(admin.TabularInline):
     model = Subject.department.through
     
@@ -68,10 +72,11 @@ class DepartmentAdmin(admin.ModelAdmin):
     inlines = [ClassInline, TeacherInline, MembershipInline]
     
 class AssignAdmin(admin.ModelAdmin):
-    list_display = ('class_id', 'subject', 'teacher')
+    list_display = ('class_id', 'class_id_id','subject', 'teacher')
     search_fields = ('class_id__department__name', 'class_id__id', 'subject__name', 'teacher__name')
     ordering = ['class_id__department__name', 'class_id__id', 'subject__code']
     raw_id_fields = ['class_id', 'subject', 'teacher']
+    inlines = [AssignTimeInline]
     
 class UpdatesAdmin(admin.ModelAdmin):
     list_display = ('id', 'title','description', 'showto')
