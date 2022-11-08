@@ -70,3 +70,16 @@ class TeacherSectionSerializer(ModelSerializer):
   class Meta:
     model = Teacher
     fields = '__all__'
+
+
+class AssignTimeSerializer(ModelSerializer):
+
+  class Meta:
+    model = AssignTime
+    fields = ['period', 'day', 'assign']
+    
+class AssignClassSerializer(ModelSerializer):
+
+  class Meta:
+    model = AssignClass
+    fields = '__all__'

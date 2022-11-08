@@ -118,7 +118,7 @@ class Class(models.Model):
     year = models.IntegerField()
     def __str__(self):
         department = Department.objects.get(name=self.department)
-        return '%s : %d%s' % (department.name, self.year, self.section)
+        return '%s : %s --> %d%s' % (department.name,self.id, self.year, self.section)
     
     class Meta:
         verbose_name_plural = 'Classes'
@@ -187,7 +187,7 @@ class AssignClass(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name = "assignclass_teacher")
 
     class Meta:
-        unique_together = (('subject', 'class_id', 'teacher'),)
+        unique_together = (('subject', 'class_id'),)
         verbose_name_plural = 'Assign Classes'
         
     def __str__(self):
@@ -231,15 +231,11 @@ class Update(models.Model):
         
         
 TIME_SLOTS = (
-    ('7:30 - 8:30', '7:30 - 8:30'),
-    ('8:30 - 9:30', '8:30 - 9:30'),
-    ('9:30 - 10:30', '9:30 - 10:30'),
+    ('8:30 - 9:20', '8:30 - 9:20'),
+    ('9:20 - 10:10', '9:20 - 10:10'),
     ('11:00 - 11:50', '11:00 - 11:50'),
     ('11:50 - 12:40', '11:50 - 12:40'),
-    ('12:40 - 1:30', '12:40 - 1:30'),
-    ('2:30 - 3:30', '2:30 - 3:30'),
-    ('3:30 - 4:30', '3:30 - 4:30'),
-    ('4:30 - 5:30', '4:30 - 5:30'),
+    ('1:30 - 2:20', '1:30 - 2:20'),
 )
 
 DAYS = (
@@ -256,9 +252,16 @@ class AssignTime(models.Model):
     period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')
     day = models.CharField(max_length=15, choices=DAYS)
     
-    def validate_unique(self, *args, **kwargs):
-        super(AssignTime, self).validate_unique(*args, **kwargs)
-        query = AssignTime.objects.filter(period=self.period,day=self.day)
-        if query.filter(assign__teacher=self.assign.teacher).exists():
-            raise ValidationError("Teacher is Busy")
+    # def validate_unique(self, *args, **kwargs):
+    #     super(AssignClass, self).validate_unique(*args, **kwargs)
+    #     query = AssignTime.objects.filter(period=self.period,day=self.day)
+    #     if query.filter(assign__teacher=self.assign.teacher).exists():
+    #         print(self.period)
+    #         print(self.day)
+    #         print(query)
+    #         raise ValidationError("Teacher is Busy.")
+    #     # if query.filter(assign__class_id=self.assign.class_id).exists():
+    #     #     raise ValidationError("The period is already occupied.")
+        
+        
 

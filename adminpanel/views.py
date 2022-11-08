@@ -281,7 +281,7 @@ class ClassByDepartment(APIView):
 
     def get(self, request, departmentid):
         try:
-            print(departmentid)
+            # print(departmentid)
             dep = Department.objects.get(id = departmentid)
         except:
             return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
