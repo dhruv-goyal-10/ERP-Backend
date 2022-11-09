@@ -251,17 +251,34 @@ class AssignTime(models.Model):
     assign = models.ForeignKey(AssignClass, on_delete=models.CASCADE)
     period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')
     day = models.CharField(max_length=15, choices=DAYS)
+    class_id = models.ForeignKey(Class, on_delete=models.CASCADE, null=True)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True)
+    class Meta:
+        unique_together = (('period', 'day', 'class_id'),('period', 'day', 'teacher'),)
+    
     
     # def validate_unique(self, *args, **kwargs):
-    #     super(AssignClass, self).validate_unique(*args, **kwargs)
+    #     super(AssignTime, self).validate_unique(*args, **kwargs)
     #     query = AssignTime.objects.filter(period=self.period,day=self.day)
     #     if query.filter(assign__teacher=self.assign.teacher).exists():
     #         print(self.period)
     #         print(self.day)
     #         print(query)
     #         raise ValidationError("Teacher is Busy.")
-    #     # if query.filter(assign__class_id=self.assign.class_id).exists():
-    #     #     raise ValidationError("The period is already occupied.")
-        
-        
+        # if query.filter(assign__class_id=self.assign.class_id).exists():
+        #     raise ValidationError("The period is already occupied.")
+    
+    
+class ClassAttendance(models.Model):
+    assign = models.ForeignKey(AssignTime, on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.BooleanField(default=False)
+
+
+class StudentAttendance(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    classattendance = models.ForeignKey(ClassAttendance, on_delete=models.CASCADE)
+    is_present = models.BooleanField(default=True)
+
 

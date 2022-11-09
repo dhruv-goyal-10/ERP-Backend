@@ -94,7 +94,17 @@ class StudentFeedbackAdmin(admin.ModelAdmin):
     search_fields = ('student__name',)
     ordering = [ 'student__name', 'feed']
 
+class StudentAttendanceInline(admin.TabularInline):
+    model = StudentAttendance
+    extra = 0
+class ClassAttendanceAdmin(admin.ModelAdmin):
+    list_display = ('assign', 'date', 'status')
+    ordering = ['assign', 'date']
+    inlines = [StudentAttendanceInline]
 
+    
+    
+admin.site.register(ClassAttendance, ClassAttendanceAdmin)
 admin.site.register(Subject, SubjectAdmin)
 admin.site.register(AssignClass, AssignAdmin)
 admin.site.register(User, UserModelAdmin)
