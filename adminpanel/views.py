@@ -195,8 +195,6 @@ class Departments(APIView):
             instance=department, data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.validated_data.get('id')
-        if (id != pk):
-            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
 
@@ -247,8 +245,6 @@ class ClassObject(APIView):
         serializer = ClassSerializer(instance=clas, data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.validated_data.get('id')
-        if (id != pk):
-            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)
 
@@ -381,3 +377,15 @@ class FeedbackView(APIView):
             avgfeed = tf/c
             resdict["averagefeed"] = avgfeed
         return Response(resdict,  status=status.HTTP_200_OK)
+    
+    
+class CreateAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+    
+    def post(self, request):
+        serializer = CreateAttendanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        return Response({'msg': 'Subject added successfully'},  status=status.HTTP_200_OK)
+        
