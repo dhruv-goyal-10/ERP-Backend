@@ -7,7 +7,8 @@ urlpatterns = [
     path('addteacher/', AddTeacher.as_view(), name='addTeacher'),
     path('departments/<str:pk>/', Departments.as_view(), name='Departments'),
     path('classes/<str:pk>/', ClassObject.as_view(), name='Classes'),
-    path('classesindepartment/<str:departmentid>/', ClassByDepartment.as_view(), name='classdepartmentfilter'),
+    path('classesindepartment/<str:departmentid>/',
+         ClassByDepartment.as_view(), name='classdepartmentfilter'),
     path('subjects/<str:pk>/', Subjects.as_view(), name='Subjects'),
     path('feedback/<str:key>/', FeedbackView.as_view(), name='Feedbacks'),
 ]

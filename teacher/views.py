@@ -53,7 +53,10 @@ class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, classid):
+    def get(self, request, classid, feedback='defaultvalue'):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         try:
             clas = Class.objects.get(id=classid)
         except:
@@ -61,11 +64,22 @@ class StudentInClass(APIView):
         classdetails = {'department': clas.department.name,
                         'year': clas.year, 'section': clas.section}
         students = Student.objects.all()
+        teacher = Teacher.objects.get(userID=userID)
+        feedbacks = {}
         dict = {}
         for student in students:
             if (student.class_id.id) == classid:
                 dict[student.userID] = student.name
-        response = {"classdetails": classdetails, "students": dict}
+            if feedback=='feedback':
+                try:
+                    feed = StudentFeedback.objects.get(teacher = teacher, student = student)
+                except:
+                    continue
+                feedbacks[feed.student.userID] = {feed.student.name :feed.feed}
+        if feedback == 'feedback':
+            response = {"feeds":feedbacks}
+        else:
+            response = {"classdetails": classdetails, "students": dict}
         return Response(response, status=status.HTTP_200_OK)
 
 
@@ -73,7 +87,10 @@ class TeacherOfClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, classid):
+    def get(self, request, classid, feedback='defaultvalue'):
+        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        userID = tokenset['userID']
         try:
             clas = Class.objects.get(id=classid)
         except:
@@ -81,11 +98,22 @@ class TeacherOfClass(APIView):
         classdetails = {'department': clas.department.name,
                         'year': clas.year, 'section': clas.section}
         assignedclasses = AssignClass.objects.all().filter(class_id = classid)
+        student = Student.objects.get(userID=userID)
+        feedbacks = {}
         arr=[]
         for assignedclass in assignedclasses:
             arr+=[assignedclass.teacher.name]
-        arr=set(arr)
-        response = {"classdetails": classdetails, "teachers": arr}
+            if feedback == 'feedback':
+                try:
+                    feed = TeacherFeedback.objects.get(student=student, teacher=assignedclass.teacher)
+                except:
+                    continue
+                feedbacks[feed.teacher.userID] = {feed.teacher.name :feed.feed}
+        if feedback == 'feedback':
+            response = {"feeds":feedbacks}
+        else:
+            arr=set(arr)
+            response = {"classdetails": classdetails, "teachers": arr}
         return Response(response, status=status.HTTP_200_OK)
 
 class ClassOfTeacher(APIView):

@@ -10,39 +10,39 @@ from .serializers import *
 from adminpanel.permissions import *
 
 
-
 class AddStudent(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
         allclasses = list(Class.objects.all())
-        dic={}
+        dic = {}
         for clas in allclasses:
-            dic[(clas.year, clas.department.name, clas.section)]=clas.id
+            dic[(clas.year, clas.department.name, clas.section)] = clas.id
         sortedclasses = list(dic.keys())
         sortedclasses.sort()
-        tdic={}
+        tdic = {}
         for key in sortedclasses:
-            tdic[dic[key]]=key
+            tdic[dic[key]] = key
         return Response(tdic, status=status.HTTP_200_OK)
-
 
     def post(self, request):
 
-        serializer = AddUserSerializer(data=request.data)
+        serializer = AddStudentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
-        sclass = request.data.get('assignedclass')
+        classid = serializer.data.get('class_id')
         gender = request.data.get('sex')
 
-        students = Student.objects.all()
-        try:
-            userID = int(list(students)[-1].userID)+1
-        except:
+        students = list(Student.objects.all())
+        if len(students) != 0:
+            userID = int(students[-1].userID)+1
+        else:
             userID = 200000
+
+        classid = Class.objects.get(id=classid)
 
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
@@ -54,18 +54,9 @@ class AddStudent(APIView):
         except:
             pass
 
-        if sclass is not None:
-            allclass = list(Class.objects.all())
-            for clas in allclass:
-                if sclass.lower()==clas.id.lower():
-                    sclass=clas
-                    break 
-            else:
-                return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-
         if gender is not None:
             if gender.lower() == 'm':
-                sex='Male'
+                sex = 'Male'
             elif gender.lower() == 'f':
                 sex = 'Female'
             else:
@@ -74,29 +65,28 @@ class AddStudent(APIView):
         try:
             EMAIL.send_credentials_via_email(
                 userID, password, name, email, 'student')
-            user = User.objects.create_user(
-                email=email,
-                userID=userID,
-                name=name,
-            )
-            user.set_password(password)
-            user.is_stu = True
-            user.save()
-            Student(
-                user=user,
-                userID=userID,
-                name=name,
-                DOB=DOB,
-            ).save()
-            curstu=Student.objects.get(userID = userID)
-            if sclass is not None:
-                curstu.class_id=sclass 
-            if gender is not None:
-                curstu.sex = sex
-            curstu.save()
-            return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.create_user(
+            email=email,
+            userID=userID,
+            name=name,
+        )
+        user.set_password(password)
+        user.is_stu = True
+        user.save()
+        Student(
+            user=user,
+            userID=userID,
+            name=name,
+            DOB=DOB,
+            class_id=classid,
+        ).save()
+        curstu = Student.objects.get(userID=userID)
+        if gender is not None:
+            curstu.sex = sex
+        curstu.save()
+        return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
 
 
 class AddTeacher(APIView):
@@ -107,17 +97,17 @@ class AddTeacher(APIView):
         alldepartments = list(Department.objects.all())
         dict = {}
         for dep in alldepartments:
-            dict[dep.id]=dep.name
+            dict[dep.id] = dep.name
         return Response(dict, status=status.HTTP_200_OK)
 
     def post(self, request):
 
-        serializer = AddUserSerializer(data=request.data)
+        serializer = AddTeacherSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
-        sdepartment = request.data.get('department')
+        department = serializer.data.get('department')
         gender = request.data.get('sex')
 
         teachers = Teacher.objects.all()
@@ -125,6 +115,8 @@ class AddTeacher(APIView):
             userID = int(list(teachers)[-1].userID)+1
         except:
             userID = 100000
+
+        department = Department.objects.get(id=department)
 
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
@@ -136,63 +128,52 @@ class AddTeacher(APIView):
         except:
             pass
 
-        if sdepartment is not None:
-            alldepartments = list(Department.objects.all())
-            for dep in alldepartments:
-                if sdepartment.lower()==dep.id.lower():
-                    sdepartment=dep
-                    break 
-            else:
-                return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-
         if gender is not None:
             if gender.lower() == 'm':
-                sex='Male'
+                sex = 'Male'
             elif gender.lower() == 'f':
                 sex = 'Female'
             else:
                 return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
 
-
         try:
-            # EMAIL.send_credentials_via_email(
-            #     userID, password, name, email, 'teacher')
-            user = User.objects.create_user(
-                email=email,
-                userID=userID,
-                name=name,
-            )
-            user.set_password(password)
-            user.is_tea = True
-            user.save()
-
-            Teacher(
-                user=user,
-                userID=userID,
-                name=name,
-                DOB=DOB
-            ).save()
-            curtea=Teacher.objects.get(userID = userID)
-            if sdepartment is not None:
-                curtea.class_id=sdepartment
-            if gender is not None:
-                curtea.sex = sex
-            curtea.save()
-            return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+            EMAIL.send_credentials_via_email(
+                userID, password, name, email, 'teacher')
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
+        user = User.objects.create_user(
+            email=email,
+            userID=userID,
+            name=name,
+        )
+        user.set_password(password)
+        user.is_tea = True
+        user.save()
+
+        Teacher(
+            user=user,
+            userID=userID,
+            name=name,
+            DOB=DOB,
+            department=department
+        ).save()
+        curtea = Teacher.objects.get(userID=userID)
+        if gender is not None:
+            curtea.sex = sex
+        curtea.save()
+        return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+
+
 class Departments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
-    
+
     def get(self, request, pk):
         if pk == 'ALL':
             departments = Department.objects.all()
             serializer = DepartmentSerializer(departments, many=True)
         else:
-            departments = Department.objects.get(id=pk) 
+            departments = Department.objects.get(id=pk)
             serializer = DepartmentSerializer(departments, many=False)
         return Response(serializer.data)
 
@@ -202,7 +183,7 @@ class Departments(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'Department added successfully'},  status=status.HTTP_200_OK)
-        
+
     def put(self, request, pk):
         try:
             department = Department.objects.get(id=pk)
@@ -212,11 +193,11 @@ class Departments(APIView):
             instance=department, data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.validated_data.get('id')
-        if(id != pk):
+        if (id != pk):
             return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
-    
+
     def delete(self, request, pk):
         try:
             department = Department.objects.get(id=pk)
@@ -231,19 +212,19 @@ class ClassObject(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request, pk):
-        if pk=='ALL':
+        if pk == 'ALL':
             allclasses = list(Class.objects.all())
-            dic={}
+            dic = {}
             for clas in allclasses:
-                dic[(clas.year, clas.department.name, clas.section)]=clas.id
+                dic[(clas.year, clas.department.name, clas.section)] = clas.id
             sortedclasses = list(dic.keys())
             sortedclasses.sort()
-            tdic={}
+            tdic = {}
             for key in sortedclasses:
-                tdic[dic[key]]=key
+                tdic[dic[key]] = key
             return Response(tdic, status=status.HTTP_200_OK)
         else:
-            classes = Class.objects.get(id=pk) 
+            classes = Class.objects.get(id=pk)
             serializer = ClassSerializer(classes, many=False)
             return Response(serializer.data)
 
@@ -261,10 +242,10 @@ class ClassObject(APIView):
         serializer = ClassSerializer(instance=clas, data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.validated_data.get('id')
-        if(id != pk):
+        if (id != pk):
             return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)   
+        return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
         try:
@@ -273,7 +254,7 @@ class ClassObject(APIView):
             return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
-        
+
 
 class ClassByDepartment(APIView):
     authentication_classes = [JWTAuthentication]
@@ -281,17 +262,16 @@ class ClassByDepartment(APIView):
 
     def get(self, request, departmentid):
         try:
-            # print(departmentid)
-            dep = Department.objects.get(id = departmentid)
+            dep = Department.objects.get(id=departmentid)
         except:
             return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-        allclasses = Class.objects.all().filter(department = dep)
-        dict={}
+        allclasses = Class.objects.all().filter(department=dep)
+        dict = {}
         for clas in allclasses:
-            dict[clas.id]={"year":clas.year, "section" : clas.section}
+            dict[clas.id] = {"year": clas.year, "section": clas.section}
         return Response(dict,  status=status.HTTP_200_OK)
-    
-    
+
+
 class Subjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -301,7 +281,7 @@ class Subjects(APIView):
             subject = Subject.objects.all()
             serializer = SubjectSerializer(subject, many=True)
         else:
-            subject = Subject.objects.get(code=pk) 
+            subject = Subject.objects.get(code=pk)
             serializer = SubjectSerializer(subject, many=False)
         return Response(serializer.data)
 
@@ -319,10 +299,10 @@ class Subjects(APIView):
         serializer = SubjectSerializer(instance=subject, data=request.data)
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data.get('code')
-        if(code != pk):
+        if (code != pk):
             return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return Response({'msg': 'Subject modified successfully'},  status=status.HTTP_200_OK)   
+        return Response({'msg': 'Subject modified successfully'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
         try:
@@ -331,7 +311,7 @@ class Subjects(APIView):
             return Response({'msg': 'Subject does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         subject.delete()
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
-        
+
 
 class FeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -343,44 +323,50 @@ class FeedbackView(APIView):
             feedbacks = list(TeacherFeedback.objects.all())
             for feedback in feedbacks:
                 try:
-                    resdict[feedback.teacher.name]+=[{feedback.student.name: feedback.feed}]
+                    resdict[feedback.teacher.name] += [
+                        {feedback.student.name: feedback.feed}]
                 except:
-                    resdict[feedback.teacher.name]=[{feedback.student.name: feedback.feed}]
+                    resdict[feedback.teacher.name] = [
+                        {feedback.student.name: feedback.feed}]
         elif key.lower() == 'students':
             feedbacks = list(StudentFeedback.objects.all())
             for feedback in feedbacks:
                 try:
-                    resdict[feedback.student.name]+=[{feedback.teacher.name: feedback.feed}]
+                    resdict[feedback.student.name] += [
+                        {feedback.teacher.name: feedback.feed}]
                 except:
-                    resdict[feedback.student.name]=[{feedback.teacher.name: feedback.feed}]
+                    resdict[feedback.student.name] = [
+                        {feedback.teacher.name: feedback.feed}]
         else:
             try:
-                fuser = User.objects.get(userID = key)
+                fuser = User.objects.get(userID=key)
             except:
                 return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
-            stu=False 
-            tea=False 
+            stu = False
+            tea = False
             try:
-                student = Student.objects.get(userID = key)
-                stu=True
+                student = Student.objects.get(userID=key)
+                stu = True
             except:
-                teacher = Teacher.objects.get(userID = key)
-                tea=True
-            c=0
-            tf=0
+                teacher = Teacher.objects.get(userID=key)
+                tea = True
+            c = 0
+            tf = 0
             if stu:
-                feedbacks = list(StudentFeedback.objects.filter(student = student))
+                feedbacks = list(
+                    StudentFeedback.objects.filter(student=student))
             elif tea:
-                feedbacks = list(TeacherFeedback.objects.filter(teacher = teacher))
+                feedbacks = list(
+                    TeacherFeedback.objects.filter(teacher=teacher))
             else:
                 return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
             for feedback in feedbacks:
                 if stu:
-                    resdict[feedback.teacher.name]=feedback.feed
+                    resdict[feedback.teacher.name] = feedback.feed
                 else:
-                    resdict[feedback.student.name]=feedback.feed
-                tf+=feedback.feed
-                c+=1
-            avgfeed=tf/c
-            resdict["averagefeed"]=avgfeed
+                    resdict[feedback.student.name] = feedback.feed
+                tf += feedback.feed
+                c += 1
+            avgfeed = tf/c
+            resdict["averagefeed"] = avgfeed
         return Response(resdict,  status=status.HTTP_200_OK)
