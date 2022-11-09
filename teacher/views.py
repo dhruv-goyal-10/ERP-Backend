@@ -189,6 +189,10 @@ class StudentFeedbackView(APIView):
             return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
     
     
+    
+TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
+
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -197,16 +201,20 @@ class TimeTable(APIView):
         pk = check_if_teacher_and_return_userID(request)
         if(pk is False):
             return Response({'msg': 'Invalid credentials'},  status=status.HTTP_200_OK)
-        pk=pk.userID
-        classes = AssignClass.objects.filter(teacher__userID = pk)
+        
+        classes = AssignClass.objects.filter(teacher__userID = pk.userID)
         list = []
-        for klass in classes:
-            dict={}
-            dict= {"class" : klass.class_id.id, "subject" : klass.subject.name, "teacher" : klass.teacher.name}
-            times = AssignTime.objects.filter(assign__id=klass.id)
-            for time in times:
-                ndict=dict.copy()
-                if time.assign.id == klass.id:
-                    ndict|= {"period" : time.period, "day" : time.day}
-                    list.append(ndict)
+        for i in TIME_SLOTS:
+            for j in DAYS:
+                time=AssignTime.objects.filter(period=i, day=j,assign__teacher__userID = pk.userID )
+                
+                if time.exists():
+                    time=time[0]
+                    
+                    dict={}
+                    dict= {"class" : time.assign.class_id.id, "subject" : time.assign.subject.name, "teacher" : time.assign.teacher.name, "period" : i, "day" : j}
+                else:
+                    dict={}
+                    dict= {"class" : "", "subject" : "", "teacher" : pk.name, "period" : i, "day" : j}
+                list.append(dict)            
         return Response(list,  status=status.HTTP_200_OK)
