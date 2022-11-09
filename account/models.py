@@ -255,6 +255,9 @@ class AssignTime(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True)
     class Meta:
         unique_together = (('period', 'day', 'class_id'),('period', 'day', 'teacher'),)
+        
+    def __str__(self):
+        return '%s : %s --> %s' % (self.class_id.id,self.day, self.period)
     
     
     # def validate_unique(self, *args, **kwargs):
@@ -273,6 +276,9 @@ class ClassAttendance(models.Model):
     assign = models.ForeignKey(AssignTime, on_delete=models.CASCADE)
     date = models.DateField()
     status = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = (('assign', 'date'),)
 
 
 class StudentAttendance(models.Model):

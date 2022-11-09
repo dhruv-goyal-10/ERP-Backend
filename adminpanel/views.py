@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from account.emails import *
 from .serializers import *
 from adminpanel.permissions import *
+from datetime import date
 
 
 class AddStudent(APIView):
@@ -195,8 +196,6 @@ class Departments(APIView):
             instance=department, data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.validated_data.get('id')
-        if (id != pk):
-            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
 
@@ -247,8 +246,6 @@ class ClassObject(APIView):
         serializer = ClassSerializer(instance=clas, data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.validated_data.get('id')
-        if (id != pk):
-            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)
 
@@ -381,3 +378,40 @@ class FeedbackView(APIView):
             avgfeed = tf/c
             resdict["averagefeed"] = avgfeed
         return Response(resdict,  status=status.HTTP_200_OK)
+
+
+class CreateAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def post(self, request):
+        serializer = CreateAttendanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        start_date = serializer.data.get("start_date")
+        end_date = serializer.data.get("end_date")
+        class_id = serializer.data.get("class_id")
+        sdate = date(int(start_date[:4]), int(
+            start_date[5:7]), int(start_date[8:]))
+        edate = date(int(end_date[:4]), int(end_date[5:7]), int(end_date[8:]))
+        n = (edate - sdate).days
+        cur = sdate
+        curclass = Class.objects.get(id=class_id)
+        students = Student.objects.filter(class_id=curclass)
+        days = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
+                4: 'Thursday', 5: 'Friday', 6: 'Saturday', 0: 'Sunday'}
+        for i in range(n+1):
+            curdate = cur
+            curday = days[int(cur.strftime('%w'))]
+            cur += timedelta(days=1)
+            if curday == 'Sunday':
+                continue
+            assignedtimes = AssignTime.objects.filter(
+                day=curday, class_id=curclass)
+            for assignedtime in assignedtimes:
+                ca = ClassAttendance.objects.create(
+                    date=curdate, assign=assignedtime)
+                for student in students:
+                    StudentAttendance.objects.create(
+                        student=student, classattendance=ca, subject=assignedtime.assign.subject)
+
+        return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
