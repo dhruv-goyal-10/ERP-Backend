@@ -277,6 +277,9 @@ class ClassAttendance(models.Model):
     date = models.DateField()
     status = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = (('assign', 'date'),)
+
 
 class StudentAttendance(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)

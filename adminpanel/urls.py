@@ -10,4 +10,5 @@ urlpatterns = [
     path('classesindepartment/',ClassByDepartment.as_view(), name='classdepartmentfilter'),
     path('subjects/', Subjects.as_view(), name='Subjects'),
     path('feedback/', FeedbackView.as_view(), name='Feedbacks'),
+    path('createattendance/', CreateAttendance.as_view(), name='createattendance'),
 ]

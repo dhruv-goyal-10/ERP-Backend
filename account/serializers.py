@@ -106,8 +106,8 @@ class FeedbackSerizer(serializers.Serializer):
     feed = serializers.IntegerField(min_value = 1, max_value = 5)
     
 class CreateAttendanceSerializer(serializers.Serializer):
-    start_date = models.DateField()
-    end_date = models.DateField()
-    class_id = models.CharField()
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+    class_id = serializers.CharField(max_length = 10)
     
     
