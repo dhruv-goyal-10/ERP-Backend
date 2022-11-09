@@ -99,3 +99,8 @@ class AssignClassSerializer(ModelSerializer):
     class Meta:
         model = AssignClass
         fields = '__all__'
+
+
+class FeedbackSerizer(serializers.Serializer):
+    userID = serializers.IntegerField()
+    feed = serializers.IntegerField()

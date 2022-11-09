@@ -54,17 +54,18 @@ class TeacherFeedbackView(APIView):
     permission_classes = [IsAuthenticated]
 
 
-    def put(self, request, teacher):
+    def put(self, request):
         student = check_if_student_and_return_userID(request)
         if not student:
             return Response({'msg': 'NOT ALLOWED'},  status=status.HTTP_400_BAD_REQUEST)
+        serializer = FeedbackSerizer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+        userID = serializer.data.get('userID')
+        feed = request.data.get('feed')
         try:
-            teacher = Teacher.objects.get(userID=teacher)
+            teacher = Teacher.objects.get(userID=userID)
         except:
             return Response({'msg': 'teacher does not exist'},  status=status.HTTP_400_BAD_REQUEST)
-        feed = request.data.get('feed')
-        if feed is None:
-            feed = 3
         try:
             feedback = TeacherFeedback.objects.get(teacher=teacher, student = student)
             feedback.feed=feed

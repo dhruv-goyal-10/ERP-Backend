@@ -53,7 +53,8 @@ class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, classid, feedback='defaultvalue'):
+    def get(self, request, feedback='defaultvalue'):
+        classid = request.data.get("id")
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
@@ -87,7 +88,8 @@ class TeacherOfClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, classid, feedback='defaultvalue'):
+    def get(self, request, feedback='defaultvalue'):
+        classid = request.data.get("id")
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
@@ -120,7 +122,8 @@ class ClassOfTeacher(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, teacherid):
+    def get(self, request):
+        teacherid = request.data.get("id")
         try:
             teacher = Teacher.objects.get(userID=teacherid)
         except:
@@ -137,7 +140,8 @@ class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request,pk):
+    def get(self, request):
+        pk = request.data.get("id")
         try:
             dept = Department.objects.get(id=pk)
         except:
@@ -150,7 +154,8 @@ class TeachersInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request,pk):
+    def get(self, request):
+        pk = request.data.get("id")
         try:
             dept = Department.objects.get(id=pk)
         except:
@@ -164,17 +169,18 @@ class StudentFeedbackView(APIView):
     permission_classes = [IsAuthenticated]
 
 
-    def put(self, request, student):
+    def put(self, request):
         teacher = check_if_teacher_and_return_userID(request)
         if not teacher:
             return Response({'msg': 'NOT ALLOWED'},  status=status.HTTP_400_BAD_REQUEST)
+        serializer = FeedbackSerizer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+        userID = serializer.data.get('userID')
+        feed = request.data.get('feed')
         try:
-            student = Student.objects.get(userID=student)
+            student = Student.objects.get(userID=userID)
         except:
             return Response({'msg': 'student does not exist'},  status=status.HTTP_400_BAD_REQUEST)
-        feed = request.data.get('feed')
-        if feed is None:
-            feed = 3
         try:
             feedback = StudentFeedback.objects.get(teacher=teacher, student = student)
             feedback.feed=feed

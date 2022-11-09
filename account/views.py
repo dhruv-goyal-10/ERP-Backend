@@ -254,15 +254,15 @@ class UpdateSectionView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request, pk):
+    def get(self, request):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
         who = userID//100000
-        if who == 2:
+        if who == 1:
             updates = Update.objects.filter(showto=3).values(
             ) | Update.objects.filter(showto=2).values()
-        elif who == 1:
+        elif who == 2:
             updates = Update.objects.filter(showto=3).values(
             ) | Update.objects.filter(showto=1).values()
         else:
@@ -271,14 +271,15 @@ class UpdateSectionView(APIView):
         SerializerData = [serializer.data]
         return Response(SerializerData)
 
-    def post(self, request, pk):
+    def post(self, request):
         serializer = UpdateSectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             serializer.save()
         return Response({'msg': 'UPDATE ADDED'},  status=status.HTTP_200_OK)
 
-    def put(self, request, pk):
+    def put(self, request):
+        pk = request.data.get("id")
         update = Update.objects.get(id=pk)
         serializer = UpdateSectionSerializer(
             instance=update, data=request.data)
@@ -286,7 +287,8 @@ class UpdateSectionView(APIView):
         serializer.save()
         return Response({'msg': 'UPDATE is modified'},  status=status.HTTP_200_OK)
 
-    def delete(self, request, pk):
+    def delete(self, request):
+        pk = request.data.get("id")
         update = Update.objects.get(id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
