@@ -123,7 +123,6 @@ class StudentAttendanceSerializer(ModelSerializer):
         
 class StudentSubjectAttendanceSerializer(serializers.Serializer):
     subject_code = serializers.CharField()
-    class_id = serializers.CharField()
-    
+    month = serializers.IntegerField()
     
     

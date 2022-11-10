@@ -120,9 +120,8 @@ class StudentOverallAttendance(APIView):
         subjects= AssignClass.objects.filter(class_id=class_id)
         list=[]
         for subject in subjects:
-            subject = subject.subject
-            subject_name= subject.name
-            subject_code= subject.code
+            subject_name= subject.subject.name
+            subject_code= subject.subject.code
             total_classes = ClassAttendance.objects.filter(assign__class_id=class_id, 
                                                             assign__assign__subject__code = subject_code,
                                                             status=True
@@ -148,3 +147,30 @@ class StudentOverallAttendance(APIView):
             # print(total_classes, attended_classes, attendance_percent)
         return Response(list, status=status.HTTP_200_OK)
         
+
+class StudentSubjectAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        student = check_if_student_and_return_userID(request)
+        userID= student.userID
+        class_id= student.class_id
+        serializer = StudentSubjectAttendanceSerializer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+        subject_code = serializer.data.get('subject_code')
+        month = serializer.data.get('month')
+        attendances = StudentAttendance.objects.filter(subject__code= subject_code,
+                                                       student = student,
+                                                       classattendance__date__month=month)
+        list=[]
+        for attendance in attendances:
+            dict={}
+            dict={
+                "date":attendance.classattendance.date,
+                "day": attendance.classattendance.assign.day,
+                "period": attendance.classattendance.assign.period,
+                "is_present": attendance.is_present
+            }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)

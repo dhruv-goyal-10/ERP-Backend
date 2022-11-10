@@ -282,5 +282,8 @@ class StudentsinClassAttendance(APIView):
                 classatt.status=True
                 classatt.save()
                 
-        return Response("Class Attendance Updated Successfully", status=status.HTTP_200_OK)
+        return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
+    
+    
+
 
