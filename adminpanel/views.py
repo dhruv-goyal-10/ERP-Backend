@@ -415,3 +415,6 @@ class CreateAttendance(APIView):
                         student=student, classattendance=ca, subject=assignedtime.assign.subject)
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
+    
+    
+

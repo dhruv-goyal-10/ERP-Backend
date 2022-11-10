@@ -127,7 +127,7 @@ WSGI_APPLICATION = 'ERP_backend.wsgi.application'
 
 ON_HEROKU= config('ON_HEROKU')
 
-if ON_HEROKU == 1:
+if ON_HEROKU == '1':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
