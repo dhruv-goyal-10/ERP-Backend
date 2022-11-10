@@ -111,3 +111,18 @@ class CreateAttendanceSerializer(serializers.Serializer):
     class_id = serializers.CharField(max_length = 10)
     
     
+class StudentClassAttendanceSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    class_id = serializers.CharField(max_length = 10)
+    period = serializers.CharField(max_length=50)
+    
+class StudentAttendanceSerializer(ModelSerializer):
+    class Meta:
+        model = StudentAttendance
+        fields = '__all__'
+        
+class StudentSubjectAttendanceSerializer(serializers.Serializer):
+    subject_code = serializers.CharField()
+    month = serializers.IntegerField()
+    
+    
