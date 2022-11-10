@@ -4,7 +4,7 @@ from django.utils.html import strip_tags
 import random
 from django.utils import timezone
 from django.conf import settings
-from . models import User
+from . models import *
 
 
 class EMAIL:
@@ -12,10 +12,10 @@ class EMAIL:
     def send_otp_via_email(mailaddress):
         otp = random.randint(1000, 9999)
         user = User.objects.get(email=mailaddress)
-        user = user.name
+        username = user.name
 
         html_content = render_to_string(
-            "otp_template.html", {"otp": otp, "user": user})
+            "otp_template.html", {"otp": otp, "user": username})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE PASSWORD RESET",
@@ -25,10 +25,11 @@ class EMAIL:
         )
         email.attach_alternative(html_content, "text/html")
         email.send()
-        user = User.objects.get(email=mailaddress)
-        user.otp = otp
-        user.otp_created_at = timezone.now()
-        user.save()
+        otprelation = OTP.objects.get(user = user)
+        otprelation.otp = otp
+        otprelation.otp_created_at = timezone.now()
+        otprelation.isexpired = False
+        otprelation.save()
 
     def send_credentials_via_email(userID, password, name, mailaddress, designation):
         html_content = render_to_string("newaccount_template.html", {
@@ -46,9 +47,11 @@ class EMAIL:
     def send_otp_for_email_verification(userID, mailaddress):
         otp = random.randint(1000, 9999)
         user = User.objects.get(userID=userID)
-        user.otp = otp
-        user.otp_created_at = timezone.now()
-        user.save()
+        otprelation = OTP.objects.get(user = user)
+        otprelation.otp = otp
+        otprelation.otp_created_at = timezone.now()
+        otprelation.isexpired = False
+        otprelation.save()
         user = user.name
         html_content = render_to_string("email_verification.html", {
                                         "otp": otp, "user": user})

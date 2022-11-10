@@ -2,6 +2,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone
+import datetime
 from datetime import timedelta
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
@@ -25,6 +26,11 @@ class UserManager(BaseUserManager):
 
         user.set_password(password)
         user.save(using=self._db)
+
+        OTP(
+            user = user
+        ).save()
+
         return user
 
     def create_superuser(self, email, name, userID, password=None):
@@ -39,6 +45,11 @@ class UserManager(BaseUserManager):
         )
         user.is_admin = True
         user.save(using=self._db)
+
+        OTP(
+            user = user
+        ).save()
+
         return user
 
 #  Custom User Model
@@ -60,9 +71,6 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
     is_stu = models.BooleanField(default=False)
     is_tea = models.BooleanField(default=False)
-    otp = models.CharField(max_length=4, null=True, blank=True)
-    otp_created_at = models.DateTimeField(
-        default=timezone.now()-timedelta(minutes=1))
     objects = UserManager()
 
     USERNAME_FIELD = 'userID'
@@ -102,7 +110,11 @@ sex_choice = (
     ('Female', 'Female')
 )
 
-
+class OTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.IntegerField(null = True, blank = True)
+    otp_created_at = models.DateTimeField(default = datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc))
+    isexpired = models.BooleanField(default = True)
 
 class Department(models.Model):
     id = models.CharField(primary_key='True', max_length=100)
