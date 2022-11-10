@@ -169,8 +169,7 @@ class Departments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
-        pk = request.data.get("id")
+    def get(self, request, pk):
         if pk == 'ALL':
             departments = Department.objects.all()
             serializer = DepartmentSerializer(departments, many=True)
@@ -179,15 +178,14 @@ class Departments(APIView):
             serializer = DepartmentSerializer(departments, many=False)
         return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, pk):
         serializer = DepartmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'Department added successfully'},  status=status.HTTP_200_OK)
 
-    def put(self, request):
-        pk = request.data.get("id")
+    def put(self, request, pk):
         try:
             department = Department.objects.get(id=pk)
         except:
@@ -199,8 +197,7 @@ class Departments(APIView):
         serializer.save()
         return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
 
-    def delete(self, request):
-        pk = request.data.get("id")
+    def delete(self, request, pk):
         try:
             department = Department.objects.get(id=pk)
         except:
@@ -213,8 +210,7 @@ class ClassObject(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
-        pk = request.data.get("id")
+    def get(self, request, pk):
         if pk == 'ALL':
             allclasses = list(Class.objects.all())
             dic = {}
@@ -231,14 +227,13 @@ class ClassObject(APIView):
             serializer = ClassSerializer(classes, many=False)
             return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, pk):
         serializer = ClassSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'msg': 'Class added successfully'},  status=status.HTTP_200_OK)
 
-    def put(self, request):
-        pk = request.data.get("id")
+    def put(self, request, pk):
         try:
             clas = Class.objects.get(id=pk)
         except:
@@ -249,8 +244,7 @@ class ClassObject(APIView):
         serializer.save()
         return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)
 
-    def delete(self, request):
-        pk = request.data.get("id")
+    def delete(self, request, pk):
         try:
             clas = Class.objects.get(id=pk)
         except:
@@ -263,8 +257,7 @@ class ClassByDepartment(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
-        departmentid = request.data.get("id")
+    def get(self, request, departmentid):
         try:
             dep = Department.objects.get(id=departmentid)
         except:
@@ -280,8 +273,7 @@ class Subjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
-        pk = request.data.get("id")
+    def get(self, request, pk):
         if pk == 'ALL':
             subject = Subject.objects.all()
             serializer = SubjectSerializer(subject, many=True)
@@ -290,14 +282,13 @@ class Subjects(APIView):
             serializer = SubjectSerializer(subject, many=False)
         return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, pk):
         serializer = SubjectSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'msg': 'Subject added successfully'},  status=status.HTTP_200_OK)
 
-    def put(self, request):
-        pk = request.data.get("id")
+    def put(self, request, pk):
         try:
             subject = Subject.objects.get(code=pk)
         except:
@@ -310,8 +301,7 @@ class Subjects(APIView):
         serializer.save()
         return Response({'msg': 'Subject modified successfully'},  status=status.HTTP_200_OK)
 
-    def delete(self, request):
-        pk = request.data.get("id")
+    def delete(self, request, pk):
         try:
             subject = Subject.objects.get(code=pk)
         except:
@@ -324,8 +314,7 @@ class FeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
-        key = request.data.get("id")
+    def get(self, request, key):
         resdict = {}
         if key.lower() == 'teachers':
             feedbacks = list(TeacherFeedback.objects.all())

@@ -53,8 +53,7 @@ class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, feedback='defaultvalue'):
-        classid = request.data.get("id")
+    def get(self, request, classid, feedback='defaultvalue'):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
@@ -88,8 +87,7 @@ class TeacherOfClass(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, feedback='defaultvalue'):
-        classid = request.data.get("id")
+    def get(self, request, classid, feedback='defaultvalue'):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
@@ -122,8 +120,7 @@ class ClassOfTeacher(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request):
-        teacherid = request.data.get("id")
+    def get(self, request, teacherid):
         try:
             teacher = Teacher.objects.get(userID=teacherid)
         except:
@@ -140,8 +137,8 @@ class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request):
-        pk = request.data.get("id")
+    def get(self, request, departmentid):
+        pk=departmentid
         try:
             dept = Department.objects.get(id=pk)
         except:
@@ -154,8 +151,8 @@ class TeachersInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request):
-        pk = request.data.get("id")
+    def get(self, request, departmentid):
+        pk = departmentid
         try:
             dept = Department.objects.get(id=pk)
         except:

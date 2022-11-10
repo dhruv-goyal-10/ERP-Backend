@@ -5,10 +5,10 @@ from adminpanel.views import *
 urlpatterns = [
     path('addstudent/', AddStudent.as_view(), name='addStudent'),
     path('addteacher/', AddTeacher.as_view(), name='addTeacher'),
-    path('departments/', Departments.as_view(), name='Departments'),
-    path('classes/', ClassObject.as_view(), name='Classes'),
-    path('classesindepartment/',ClassByDepartment.as_view(), name='classdepartmentfilter'),
-    path('subjects/', Subjects.as_view(), name='Subjects'),
-    path('feedback/', FeedbackView.as_view(), name='Feedbacks'),
+    path('departments/<str:pk>/', Departments.as_view(), name='Departments'),
+    path('classes/<str:pk>/', ClassObject.as_view(), name='Classes'),
+    path('classesindepartment/<str:departmentid>/',ClassByDepartment.as_view(), name='classdepartmentfilter'),
+    path('subjects/<str:pk>/', Subjects.as_view(), name='Subjects'),
+    path('feedback/<str:key>/', FeedbackView.as_view(), name='Feedbacks'),
     path('createattendance/', CreateAttendance.as_view(), name='createattendance'),
 ]

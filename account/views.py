@@ -12,6 +12,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import jwt
 from rest_framework.permissions import BasePermission
+import re
 
 
 class IsAdmin(BasePermission):
@@ -80,7 +81,7 @@ def matchotp(enteredOTP, user):
     generatedTIME = userOTP.otp_created_at
     expirestatus = userOTP.isexpired
     if expirestatus is True:
-        return 'expiredd'
+        return 'expired'
     if int(enteredOTP) == generatedOTP:
         if generatedTIME + timedelta(minutes=5) > timezone.now():
             return 'matched'
@@ -93,13 +94,11 @@ def matchotp(enteredOTP, user):
 def checkpassword(password, confirmpassword):
     if password != confirmpassword:
         return 'different'
-    special_char = ['@', '#', '$', '%', '*', '&']
-    isSpecial_present = any(char in special_char for char in password)
-    isLower_present = any(char.islower() for char in password)
-    isUpper_present = any(char.isupper() for char in password)
-    isDigit_present = any(char.isdigit() for char in password)
-    isLength_ok = True if len(password) >= 6 and len(password) <= 20 else False
-    if not (isSpecial_present and isLower_present and isDigit_present and isUpper_present and isLength_ok):
+    reg = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$]).{8,}$"
+    pat = re.compile(reg)
+    print(pat)
+    mat = re.search(pat, password)
+    if not mat:
         return 'conditions not fulfilled'
 
 
@@ -248,7 +247,7 @@ class UpdateSectionView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
+    def get(self, request,pk):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
@@ -265,14 +264,14 @@ class UpdateSectionView(APIView):
         SerializerData = [serializer.data]
         return Response(SerializerData)
 
-    def post(self, request):
+    def post(self, request,pk):
         serializer = UpdateSectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             serializer.save()
         return Response({'msg': 'UPDATE ADDED'},  status=status.HTTP_200_OK)
 
-    def put(self, request):
+    def put(self, request,pk):
         pk = request.data.get("id")
         update = Update.objects.get(id=pk)
         serializer = UpdateSectionSerializer(
@@ -281,8 +280,7 @@ class UpdateSectionView(APIView):
         serializer.save()
         return Response({'msg': 'UPDATE is modified'},  status=status.HTTP_200_OK)
 
-    def delete(self, request):
-        pk = request.data.get("id")
+    def delete(self, request,pk):
         update = Update.objects.get(id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
