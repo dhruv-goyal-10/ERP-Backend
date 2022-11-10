@@ -229,7 +229,11 @@ class TimeTable(APIView):
                     dict= {"class" : time.assign.class_id.id, "subject" : time.assign.subject.name, "teacher" : time.assign.teacher.name, "period" : i, "day" : j}
                 else:
                     dict={}
-                    dict= {"class" : "", "subject" : "", "teacher" : pk.name, "period" : i, "day" : j}
+                    dict= {"class" : "", 
+                           "subject" : "", 
+                           "teacher" : pk.name, 
+                           "period" : i, 
+                           "day" : j}
                 list.append(dict)            
         return Response(list,  status=status.HTTP_200_OK)
     
@@ -244,14 +248,18 @@ class StudentsinClassAttendance(APIView):
         class_id = serializer.data.get('class_id')
         date = serializer.data.get('date')
         period = serializer.data.get('period')
-        classattendance = get_object_or_404(ClassAttendance, assign__period=period, date=date, assign__class_id = class_id)
+        classattendance = get_object_or_404(ClassAttendance, assign__period=period, 
+                                            date=date, 
+                                            assign__class_id = class_id)
         students = StudentAttendance.objects.filter(classattendance= classattendance)
         list=[]
         for student in students:
             dict={}
-            dict= {"name":student.student.name ,"userID":student.student.userID ,"is_present" : student.is_present}
+            dict= {"name" : student.student.name ,
+                   "userID" : student.student.userID ,
+                   "is_present" : student.is_present}
             list.append(dict)
-        return Response(list)
+        return Response(list, status=status.HTTP_200_OK)
     
     def put(self, request):
         data=request.data
@@ -274,5 +282,5 @@ class StudentsinClassAttendance(APIView):
                 classatt.status=True
                 classatt.save()
                 
-        return Response("Class Attendance Updated Successfully")
+        return Response("Class Attendance Updated Successfully", status=status.HTTP_200_OK)
 

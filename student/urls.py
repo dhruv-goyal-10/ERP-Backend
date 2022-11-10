@@ -6,4 +6,5 @@ urlpatterns = [
     path('profiledetails/', SProfileDetails.as_view(), name='studentprofiledetails'),
     path('teacherfeedback/', TeacherFeedbackView.as_view(), name='teacherfeedback'),
     path('timetable/', TimeTable.as_view(), name='timetable'),
+    path('studentoverallattendance/', StudentOverallAttendance.as_view(), name='StudentSubjectAttendance'),
 ]

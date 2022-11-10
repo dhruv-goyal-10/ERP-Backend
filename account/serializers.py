@@ -120,5 +120,10 @@ class StudentAttendanceSerializer(ModelSerializer):
     class Meta:
         model = StudentAttendance
         fields = '__all__'
+        
+class StudentSubjectAttendanceSerializer(serializers.Serializer):
+    subject_code = serializers.CharField()
+    class_id = serializers.CharField()
+    
     
     
