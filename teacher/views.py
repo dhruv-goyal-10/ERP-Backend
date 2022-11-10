@@ -7,6 +7,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from account.emails import *
 from .permissions import *
+from django.shortcuts import get_object_or_404
 
 def check_if_teacher_and_return_userID(request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -17,6 +18,13 @@ def check_if_teacher_and_return_userID(request):
         return teacher
     except:
         return False
+    
+def return_user(request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user = User.objects.get(userID=userID)
+    return user
 
 class TProfileDetails(APIView):
     authentication_classes = [JWTAuthentication]
@@ -224,3 +232,47 @@ class TimeTable(APIView):
                     dict= {"class" : "", "subject" : "", "teacher" : pk.name, "period" : i, "day" : j}
                 list.append(dict)            
         return Response(list,  status=status.HTTP_200_OK)
+    
+    
+class StudentsinClassAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = StudentClassAttendanceSerializer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+        class_id = serializer.data.get('class_id')
+        date = serializer.data.get('date')
+        period = serializer.data.get('period')
+        classattendance = get_object_or_404(ClassAttendance, assign__period=period, date=date, assign__class_id = class_id)
+        students = StudentAttendance.objects.filter(classattendance= classattendance)
+        list=[]
+        for student in students:
+            dict={}
+            dict= {"name":student.student.name ,"userID":student.student.userID ,"is_present" : student.is_present}
+            list.append(dict)
+        return Response(list)
+    
+    def put(self, request):
+        data=request.data
+        print(type(data))
+        for i in range(len(data)):
+            if i==0:
+                date= data[i]['date']
+                period= data[i]['period']
+                class_id= data[i]['class_id']
+            else:
+                student=StudentAttendance.objects.get(student__userID=data[i]['userID'],
+                                                    classattendance__assign__class_id= class_id,
+                                                    classattendance__date=date)
+                student.is_present = data[i]['is_present']
+                student.save()
+                
+                classatt = ClassAttendance.objects.get(date=date, 
+                                            assign__class_id=class_id,
+                                            assign__period= period)
+                classatt.status=True
+                classatt.save()
+                
+        return Response("Class Attendance Updated Successfully")
+

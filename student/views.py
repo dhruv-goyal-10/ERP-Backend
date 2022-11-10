@@ -106,5 +106,4 @@ class TimeTable(APIView):
                     dict={}
                     dict= {"class" : pk, "subject" : "", "teacher" : "", "period" : i, "day" : j}
                 list.append(dict)            
-        return Response(list,  status=status.HTTP_200_OK)
-
+        return Response(list,  status=status.HTTP_200_OK)      

@@ -416,5 +416,7 @@ class CreateAttendance(APIView):
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     
+
+    
     
 

@@ -286,5 +286,5 @@ class StudentAttendance(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     classattendance = models.ForeignKey(ClassAttendance, on_delete=models.CASCADE)
     is_present = models.BooleanField(default=True)
-
+    
 
