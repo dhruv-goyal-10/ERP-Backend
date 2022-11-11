@@ -44,17 +44,15 @@ class EMAIL:
         email.attach_alternative(html_content, "text/html")
         email.send()
 
-    def send_otp_for_email_verification(userID, mailaddress):
+    def send_otp_for_email_verification(user, mailaddress):
         otp = random.randint(1000, 9999)
-        user = User.objects.get(userID=userID)
         otprelation = OTP.objects.get(user = user)
         otprelation.otp = otp
         otprelation.otp_created_at = timezone.now()
         otprelation.isexpired = False
         otprelation.save()
-        user = user.name
         html_content = render_to_string("email_verification.html", {
-                                        "otp": otp, "user": user})
+                                        "otp": otp, "user": user.name})
         text_content = strip_tags(html_content)
         email = EmailMultiAlternatives(
             "EDUMATE MAIL VERIFICATION",

@@ -8,10 +8,8 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(min_length=8, max_length=255)
 
 
-class EmailSerializer(ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email']
+class EmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
 
 class SendOTPSerializer(serializers.Serializer):
@@ -121,9 +119,6 @@ class StudentAttendanceSerializer(ModelSerializer):
         model = StudentAttendance
         fields = '__all__'
         
-class StudentSubjectAttendanceSerializer(serializers.Serializer):
-    subject_code = serializers.CharField()
-    month = serializers.IntegerField()
     
 class AssignsSerializer(serializers.Serializer):
     class_id = serializers.CharField(max_length = 10)

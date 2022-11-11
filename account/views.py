@@ -10,10 +10,10 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
-import jwt
 from . custom_permissions import *
 import re
 from django.shortcuts import get_object_or_404
+from teacher.views import return_user
 
 
 def get_tokens_for_user(user):
@@ -157,9 +157,7 @@ class UpdatePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
+        userID = return_user(request).userID
 
         serializer = UpdatePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -194,25 +192,23 @@ class UpdateEmail(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
+        loginuser = return_user(request)
         serializer = EmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         newemail = serializer.data.get('email')
         newemail = newemail.lower()
-        try:
-            user = User.objects.get(email=newemail)
-            return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            EMAIL.send_otp_for_email_verification(userID, newemail)
+        user = User.objects.filter(email=newemail)
+        if user.exists():
+            print(loginuser.email, newemail)
+            if loginuser.email == newemail:
+                return Response({'msg': 'Previous Email entered'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'User with this email already existsss'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            EMAIL.send_otp_for_email_verification(loginuser, newemail)
             return Response({'msg': 'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
 
     def put(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
-        user = User.objects.get(userID=userID)
+        user = return_user(request)
 
         serializer = VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -240,9 +236,7 @@ class UpdateSectionView(APIView):
     permission_classes = [IsAuthenticated, IsAdmin_but_get_allowed_to_all]
 
     def get(self, request, pk):
-        token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-        tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        userID = tokenset['userID']
+        userID = return_user(request).userID
         who = userID//100000
         if who == 1:
             updates = Update.objects.filter(showto=3).values(
