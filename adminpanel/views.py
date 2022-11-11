@@ -7,7 +7,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from account.emails import *
 from .serializers import *
-from adminpanel.permissions import *
+from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
 

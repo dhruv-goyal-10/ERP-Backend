@@ -6,8 +6,7 @@ from account.models import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from account.emails import *
-from .permissions import *
-from adminpanel.permissions import IsAdmin
+from account.custom_permissions import *
 from django.shortcuts import get_object_or_404
 
 
