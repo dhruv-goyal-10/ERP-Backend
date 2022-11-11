@@ -457,6 +457,7 @@ class AssignTimeSlots(APIView):
         assigned_class = get_object_or_404(AssignClass, class_id = class_id,
                                                 subject__code= subject_code,
                                                 teacher__userID= teacher_userID)
+        print(assigned_class)
        
         
         assigned_times = AssignTime.objects.filter(assign= assigned_class)
@@ -474,6 +475,7 @@ class AssignTimeSlots(APIView):
         assigned_class = get_object_or_404(AssignClass, class_id = class_id,
                                                 subject__code= subject_code,
                                                 teacher__userID= teacher_userID)
+        print(assigned_class)
         serializer = TimeSlotSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         day= serializer.data.get("day")
@@ -482,17 +484,20 @@ class AssignTimeSlots(APIView):
                                      day=day,
                                      period= period).exists():
             return Response({'msg': 'Time slot on this day is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
-        
+        klass = get_object_or_404(Class, id= class_id)
+        teacher = get_object_or_404(Teacher, userID= teacher_userID)
         AssignTime.objects.create(
             assign= assigned_class,
             day=day,
-            period=period
+            period=period,
+            class_id=klass,
+            teacher= teacher
         )
         return Response({"msg": "Time Slot has been Saved successfully"}, status=status.HTTP_200_OK)
     
     def put(self, request, class_id,subject_code, teacher_userID):
         time_slot_id= class_id
-        
+        print(time_slot_id)
         time_slot = get_object_or_404(AssignTime, id=time_slot_id)
         assigned_class= time_slot.assign
         serializer = TimeSlotSerializer(data=request.data)
