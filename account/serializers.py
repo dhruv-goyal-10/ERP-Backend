@@ -125,4 +125,11 @@ class StudentSubjectAttendanceSerializer(serializers.Serializer):
     subject_code = serializers.CharField()
     month = serializers.IntegerField()
     
+class AssignsSerializer(serializers.Serializer):
+    class_id = serializers.CharField(max_length = 10)
+    subject_code = serializers.CharField()
+    teacher_userID = serializers.IntegerField()
     
+class TimeSlotSerializer(serializers.Serializer):
+    period = serializers.ChoiceField(choices = TIME_SLOTS)
+    day = serializers.ChoiceField(choices = DAYS)

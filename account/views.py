@@ -11,19 +11,10 @@ from django.utils import timezone
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import jwt
-from rest_framework.permissions import BasePermission
+from . custom_permissions import *
 import re
+from django.shortcuts import get_object_or_404
 
-
-class IsAdmin(BasePermission):
-    def has_permission(self, request, view):
-        if not request.method =='GET':
-            token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
-            tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            userID = tokenset['userID']
-            user = User.objects.get(userID=userID)
-            return user.is_admin
-        return True
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -35,7 +26,8 @@ def get_tokens_for_user(user):
 
 
 class UserLoginView(APIView):
-    def post(self, request, format=None):
+
+    def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         userID = serializer.data.get('userID')
@@ -64,7 +56,7 @@ class SendOTPView(APIView):
             user = User.objects.get(email=email)
         except:
             return Response({'msg': 'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
-        otprelation = OTP.objects.get(user = user)
+        otprelation = OTP.objects.get(user=user)
         try:
             if otprelation.otp_created_at + timedelta(minutes=1) < timezone.now():
                 EMAIL.send_otp_via_email(email)
@@ -76,7 +68,7 @@ class SendOTPView(APIView):
 
 
 def matchotp(enteredOTP, user):
-    userOTP = OTP.objects.get(user = user)
+    userOTP = OTP.objects.get(user=user)
     generatedOTP = userOTP.otp
     generatedTIME = userOTP.otp_created_at
     expirestatus = userOTP.isexpired
@@ -96,7 +88,6 @@ def checkpassword(password, confirmpassword):
         return 'different'
     reg = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$]).{8,}$"
     pat = re.compile(reg)
-    print(pat)
     mat = re.search(pat, password)
     if not mat:
         return 'conditions not fulfilled'
@@ -134,6 +125,7 @@ class ChangePasswordView(APIView):
 
         email = email.lower()
         user = User.objects.get(email=email)
+
         passwordstatus = checkpassword(password, confirmpassword)
         if passwordstatus == 'conditions not fulfilled':
             context = {'msg': "Your Password must satisfy given conditions"}
@@ -150,7 +142,7 @@ class ChangePasswordView(APIView):
 
             user.set_password(password)
             user.save()
-            otprelation = OTP.objects.get(user = user)
+            otprelation = OTP.objects.get(user=user)
             otprelation.isexpired = True
             otprelation.save()
             return Response({'msg': 'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
@@ -231,7 +223,7 @@ class UpdateEmail(APIView):
         if otpstatus == 'matched':
             user.email = newemail
             user.save()
-            otprelation = OTP.objects.get(user = user)
+            otprelation = OTP.objects.get(user=user)
             otprelation.isexpired = True
             otprelation.save()
             return Response({'msg': 'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
@@ -245,9 +237,9 @@ class UpdateEmail(APIView):
 
 class UpdateSectionView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, IsAdmin_but_get_allowed_to_all]
 
-    def get(self, request,pk):
+    def get(self, request, pk):
         token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
         tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         userID = tokenset['userID']
@@ -264,14 +256,14 @@ class UpdateSectionView(APIView):
         SerializerData = [serializer.data]
         return Response(SerializerData)
 
-    def post(self, request,pk):
+    def post(self, request, pk):
         serializer = UpdateSectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             serializer.save()
         return Response({'msg': 'UPDATE ADDED'},  status=status.HTTP_200_OK)
 
-    def put(self, request,pk):
+    def put(self, request, pk):
         pk = request.data.get("id")
         update = Update.objects.get(id=pk)
         serializer = UpdateSectionSerializer(
@@ -280,7 +272,9 @@ class UpdateSectionView(APIView):
         serializer.save()
         return Response({'msg': 'UPDATE is modified'},  status=status.HTTP_200_OK)
 
-    def delete(self, request,pk):
-        update = Update.objects.get(id=pk)
+    def delete(self, request, pk):
+        update = get_object_or_404(Update, id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
+
+
