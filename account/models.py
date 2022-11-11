@@ -288,4 +288,5 @@ class StudentAttendance(models.Model):
     classattendance = models.ForeignKey(ClassAttendance, on_delete=models.CASCADE)
     is_present = models.BooleanField(default=True)
 
-
+    class Meta:
+        unique_together = ('student', 'classattendance')

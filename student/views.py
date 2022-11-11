@@ -132,18 +132,13 @@ class StudentSubjectAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, subject_code, month):
         user = return_user(request)
         student = get_object_or_404(Student, user=user)
-        userID = student.userID
-        class_id = student.class_id
-        serializer = StudentSubjectAttendanceSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        subject_code = serializer.data.get('subject_code')
-        month = serializer.data.get('month')
         attendances = StudentAttendance.objects.filter(subject__code=subject_code,
                                                        student=student,
-                                                       classattendance__date__month=month)
+                                                       classattendance__date__month=month,
+                                                       classattendance__status = True)
         list = []
         for attendance in attendances:
             dict = {}

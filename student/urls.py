@@ -7,5 +7,5 @@ urlpatterns = [
     path('teacherfeedback/', TeacherFeedbackView.as_view(), name='teacherfeedback'),
     path('timetable/', TimeTable.as_view(), name='timetable'),
     path('studentoverallattendance/', StudentOverallAttendance.as_view(), name='StudentOverallAttendance'),
-    path('studentsubjectattendance/', StudentSubjectAttendance.as_view(), name='StudentSubjectAttendance'),
+    path('studentsubjectattendance/<str:subject_code>/<str:month>/', StudentSubjectAttendance.as_view(), name='StudentSubjectAttendance'),
 ]
