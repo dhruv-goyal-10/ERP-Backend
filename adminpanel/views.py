@@ -365,6 +365,7 @@ class CreateAttendance(APIView):
     
 
     
+    
 class Assigns(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -439,3 +440,75 @@ class Assigns(APIView):
         
 
 
+
+
+class AssignTimeSlots(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request,class_id,subject_code, teacher_userID):
+        
+        assigned_class = get_object_or_404(AssignClass, class_id = class_id,
+                                                subject__code= subject_code,
+                                                teacher__userID= teacher_userID)
+       
+        
+        assigned_times = AssignTime.objects.filter(assign= assigned_class)
+        list=[]
+        for time_slot in assigned_times:
+            dict={
+                "id": time_slot.id,
+                "day": time_slot.day,
+                "period": time_slot.period
+            }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)
+    
+    def post(self, request, class_id, subject_code, teacher_userID):
+        assigned_class = get_object_or_404(AssignClass, class_id = class_id,
+                                                subject__code= subject_code,
+                                                teacher__userID= teacher_userID)
+        serializer = TimeSlotSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        day= serializer.data.get("day")
+        period = serializer.data.get("period")
+        if AssignTime.objects.filter(assign= assigned_class,
+                                     day=day,
+                                     period= period).exists():
+            return Response({'msg': 'Time slot on this day is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
+        
+        AssignTime.objects.create(
+            assign= assigned_class,
+            day=day,
+            period=period
+        )
+        return Response({"msg": "Time Slot has been Saved successfully"}, status=status.HTTP_200_OK)
+    
+    def put(self, request, class_id,subject_code, teacher_userID):
+        time_slot_id= class_id
+        
+        time_slot = get_object_or_404(AssignTime, id=time_slot_id)
+        assigned_class= time_slot.assign
+        serializer = TimeSlotSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_day= serializer.data.get("day")
+        new_period = serializer.data.get("period")
+        if AssignTime.objects.filter(assign= assigned_class,
+                                     day=new_day,
+                                     period= new_period).exists():
+            return Response({'msg': 'Time slot on this day is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
+        
+        time_slot.day=new_day
+        time_slot.period= new_period
+        time_slot.save()
+       
+        return Response({"msg": "Time Slot has been Updated successfully"}, status=status.HTTP_200_OK)
+    
+    
+    def delete(self, request, class_id,subject_code, teacher_userID):
+        time_slot_id= class_id
+        time_slot = get_object_or_404(AssignTime, id=time_slot_id)
+        time_slot.delete()
+       
+        return Response({"msg": "Time Slot has been deleted successfully"}, status=status.HTTP_200_OK)
+        

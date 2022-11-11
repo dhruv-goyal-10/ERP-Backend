@@ -130,4 +130,6 @@ class AssignsSerializer(serializers.Serializer):
     subject_code = serializers.CharField()
     teacher_userID = serializers.IntegerField()
     
-    
+class TimeSlotSerializer(serializers.Serializer):
+    period = serializers.ChoiceField(choices = TIME_SLOTS)
+    day = serializers.ChoiceField(choices = DAYS)

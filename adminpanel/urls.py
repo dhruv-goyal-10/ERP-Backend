@@ -12,4 +12,5 @@ urlpatterns = [
     path('feedback/<str:key>/', FeedbackView.as_view(), name='Feedbacks'),
     path('createattendance/', CreateAttendance.as_view(), name='createattendance'),
     path('assignclass/<str:class_id>/<str:subject_code>/<str:teacher_userID>/', Assigns.as_view(), name='assignclass'),
+    path('assigntimeslots/<str:class_id>/<str:subject_code>/<str:teacher_userID>/', AssignTimeSlots.as_view(), name='assigntimeslots'),
 ]
