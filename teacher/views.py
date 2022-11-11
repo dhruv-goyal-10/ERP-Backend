@@ -7,6 +7,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from account.emails import *
 from .permissions import *
+from adminpanel.permissions import IsAdmin
 from django.shortcuts import get_object_or_404
 
 
@@ -123,7 +124,7 @@ class ClassOfTeacher(APIView):
 
 class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request, departmentid):
         dept = get_object_or_404(Department, id=departmentid)
@@ -172,11 +173,10 @@ DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
     def get(self, request):
         user = return_user(request)
-        get_object_or_404(Teacher, user=user)
         classes = AssignClass.objects.filter(teacher__userID=user.userID)
         list = []
         for i in TIME_SLOTS:
@@ -203,7 +203,7 @@ class TimeTable(APIView):
 
 class StudentsinClassAttendance(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
     def get(self, request):
         serializer = StudentClassAttendanceSerializer(data=request.data)

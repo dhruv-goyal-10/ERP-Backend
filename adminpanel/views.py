@@ -9,6 +9,7 @@ from account.emails import *
 from .serializers import *
 from adminpanel.permissions import *
 from datetime import date
+from django.shortcuts import get_object_or_404
 
 
 class AddStudent(APIView):
@@ -17,18 +18,13 @@ class AddStudent(APIView):
 
     def get(self, request):
         allclasses = list(Class.objects.all())
-        dic = {}
+        arr = []
         for clas in allclasses:
-            dic[(clas.year, clas.department.name, clas.section)] = clas.id
-        sortedclasses = list(dic.keys())
-        sortedclasses.sort()
-        tdic = {}
-        for key in sortedclasses:
-            tdic[dic[key]] = key
-        return Response(tdic, status=status.HTTP_200_OK)
+            arr += [[clas.year, clas.department.name, clas.section, clas.id]]
+        arr.sort()
+        return Response(arr, status=status.HTTP_200_OK)
 
     def post(self, request):
-
         serializer = AddStudentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
@@ -42,9 +38,7 @@ class AddStudent(APIView):
             userID = int(students[-1].userID)+1
         else:
             userID = 200000
-
-        classid = Class.objects.get(id=classid)
-
+        classid = get_object_or_404(Class, id=classid)
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
@@ -68,6 +62,7 @@ class AddStudent(APIView):
                 userID, password, name, email, 'student')
         except:
             return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+
         user = User.objects.create_user(
             email=email,
             userID=userID,
@@ -86,7 +81,7 @@ class AddStudent(APIView):
         curstu = Student.objects.get(userID=userID)
         if gender is not None:
             curstu.sex = sex
-        curstu.save()
+            curstu.save()
         return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
 
 
@@ -102,7 +97,6 @@ class AddTeacher(APIView):
         return Response(dict, status=status.HTTP_200_OK)
 
     def post(self, request):
-
         serializer = AddTeacherSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get('email')
@@ -117,8 +111,7 @@ class AddTeacher(APIView):
         except:
             userID = 100000
 
-        department = Department.objects.get(id=department)
-
+        department = get_object_or_404(Department, id=department)
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
@@ -161,7 +154,7 @@ class AddTeacher(APIView):
         curtea = Teacher.objects.get(userID=userID)
         if gender is not None:
             curtea.sex = sex
-        curtea.save()
+            curtea.save()
         return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
 
 
@@ -174,7 +167,7 @@ class Departments(APIView):
             departments = Department.objects.all()
             serializer = DepartmentSerializer(departments, many=True)
         else:
-            departments = Department.objects.get(id=pk)
+            departments = get_object_or_404(Department, id=pk)
             serializer = DepartmentSerializer(departments, many=False)
         return Response(serializer.data)
 
@@ -186,22 +179,15 @@ class Departments(APIView):
             return Response({'msg': 'Department added successfully'},  status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        try:
-            department = Department.objects.get(id=pk)
-        except:
-            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        department = get_object_or_404(Department, id=pk)
         serializer = DepartmentSerializer(
             instance=department, data=request.data)
         serializer.is_valid(raise_exception=True)
-        id = serializer.validated_data.get('id')
         serializer.save()
         return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        try:
-            department = Department.objects.get(id=pk)
-        except:
-            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        department = get_object_or_404(Department, id=pk)
         department.delete()
         return Response({'msg': 'Department deleted successfully'},  status=status.HTTP_200_OK)
 
@@ -213,18 +199,13 @@ class ClassObject(APIView):
     def get(self, request, pk):
         if pk == 'ALL':
             allclasses = list(Class.objects.all())
-            dic = {}
+            arr = []
             for clas in allclasses:
-                dic[(clas.year, clas.department.name, clas.section)] = clas.id
-            sortedclasses = list(dic.keys())
-            sortedclasses.sort()
-            tdic = {}
-            for key in sortedclasses:
-                tdic[dic[key]] = key
-                # array inside object chahiye change hona h
-            return Response(tdic, status=status.HTTP_200_OK)
+                arr += [[clas.year, clas.department.name, clas.section, clas.id]]
+            arr.sort()
+            return Response(arr, status=status.HTTP_200_OK)
         else:
-            classes = Class.objects.get(id=pk)
+            classes = get_object_or_404(Class, id=pk)
             serializer = ClassSerializer(classes, many=False)
             return Response(serializer.data)
 
@@ -235,21 +216,14 @@ class ClassObject(APIView):
         return Response({'msg': 'Class added successfully'},  status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        try:
-            clas = Class.objects.get(id=pk)
-        except:
-            return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        clas = get_object_or_404(Class, id=pk)
         serializer = ClassSerializer(instance=clas, data=request.data)
         serializer.is_valid(raise_exception=True)
-        id = serializer.validated_data.get('id')
         serializer.save()
         return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        try:
-            clas = Class.objects.get(id=pk)
-        except:
-            return Response({'msg': 'Class does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        clas = get_object_or_404(Class, id=pk)
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
 
@@ -259,11 +233,8 @@ class ClassByDepartment(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request, departmentid):
-        try:
-            dep = Department.objects.get(id=departmentid)
-        except:
-            return Response({'msg': 'Department does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-        allclasses = Class.objects.all().filter(department=dep)
+        department = get_object_or_404(Department, id=departmentid)
+        allclasses = Class.objects.all().filter(department=department)
         dict = {}
         for clas in allclasses:
             dict[clas.id] = {"year": clas.year, "section": clas.section}
@@ -279,7 +250,7 @@ class Subjects(APIView):
             subject = Subject.objects.all()
             serializer = SubjectSerializer(subject, many=True)
         else:
-            subject = Subject.objects.get(code=pk)
+            subject = get_object_or_404(Subject, code=pk)
             serializer = SubjectSerializer(subject, many=False)
         return Response(serializer.data)
 
@@ -290,23 +261,14 @@ class Subjects(APIView):
         return Response({'msg': 'Subject added successfully'},  status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        try:
-            subject = Subject.objects.get(code=pk)
-        except:
-            return Response({'msg': 'Subject does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        subject = get_object_or_404(Subject, code=pk)
         serializer = SubjectSerializer(instance=subject, data=request.data)
         serializer.is_valid(raise_exception=True)
-        code = serializer.validated_data.get('code')
-        if (code != pk):
-            return Response({'msg': 'Invalid Update Request'}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({'msg': 'Subject modified successfully'},  status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        try:
-            subject = Subject.objects.get(code=pk)
-        except:
-            return Response({'msg': 'Subject does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        subject = get_object_or_404(Subject, code=pk)
         subject.delete()
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
 
@@ -336,28 +298,23 @@ class FeedbackView(APIView):
                     resdict[feedback.student.name] = [
                         {feedback.teacher.name: feedback.feed}]
         else:
-            try:
-                fuser = User.objects.get(userID=key)
-            except:
-                return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
-            stu = False
-            tea = False
-            try:
+            user = get_object_or_404(User, userID=key)
+            stu = user.is_stu
+            tea = user.is_tea
+            if stu:
                 student = Student.objects.get(userID=key)
-                stu = True
-            except:
+            elif tea:
                 teacher = Teacher.objects.get(userID=key)
-                tea = True
+            else:
+                return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
             c = 0
             tf = 0
             if stu:
                 feedbacks = list(
                     StudentFeedback.objects.filter(student=student))
-            elif tea:
+            else:
                 feedbacks = list(
                     TeacherFeedback.objects.filter(teacher=teacher))
-            else:
-                return Response({'msg': 'INVALID INPUT'},  status=status.HTTP_400_BAD_REQUEST)
             for feedback in feedbacks:
                 if stu:
                     resdict[feedback.teacher.name] = feedback.feed
@@ -385,7 +342,7 @@ class CreateAttendance(APIView):
         edate = date(int(end_date[:4]), int(end_date[5:7]), int(end_date[8:]))
         n = (edate - sdate).days
         cur = sdate
-        curclass = Class.objects.get(id=class_id)
+        curclass = get_object_or_404(Class, id=class_id)
         students = Student.objects.filter(class_id=curclass)
         days = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
                 4: 'Thursday', 5: 'Friday', 6: 'Saturday', 0: 'Sunday'}
@@ -405,8 +362,3 @@ class CreateAttendance(APIView):
                         student=student, classattendance=ca, subject=assignedtime.assign.subject)
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
-    
-
-    
-    
-
