@@ -221,6 +221,7 @@ class ClassObject(APIView):
             tdic = {}
             for key in sortedclasses:
                 tdic[dic[key]] = key
+                # array inside object chahiye change hona h
             return Response(tdic, status=status.HTTP_200_OK)
         else:
             classes = Class.objects.get(id=pk)
