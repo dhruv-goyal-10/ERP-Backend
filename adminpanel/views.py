@@ -422,6 +422,12 @@ class Assigns(APIView):
         if not assign.exists():
             return Response({"msg": "No Assigns found"}, status=status.HTTP_200_OK)
         
+        if(AssignClass.objects.filter(class_id__id=class_id, 
+                                      subject__code= new_subject_code)).exists():
+            
+            return Response({'msg': 'This subject is already assigned to this class'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+        
         assign.update(subject= new_subject,
                       teacher= new_teacher)
         
