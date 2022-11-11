@@ -258,6 +258,8 @@ class AssignClass(models.Model):
         
     def __str__(self):
         return '%s' % (self.class_id)
+    
+    
 class AssignTime(models.Model):
     assign = models.ForeignKey(AssignClass, on_delete=models.CASCADE)
     period = models.CharField(max_length=50, choices=TIME_SLOTS, default='11:00 - 11:50')

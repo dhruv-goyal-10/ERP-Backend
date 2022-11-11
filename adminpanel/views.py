@@ -9,6 +9,7 @@ from account.emails import *
 from .serializers import *
 from adminpanel.permissions import *
 from datetime import date
+from django.shortcuts import get_object_or_404
 
 
 class AddStudent(APIView):
@@ -407,5 +408,77 @@ class CreateAttendance(APIView):
     
 
     
+class Assigns(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request,class_id,subject_code, teacher_userID):
+        class_assigns = AssignClass.objects.filter(class_id=class_id)
+        dict = {}
+        list=[]
+        for assign in class_assigns:
+            dict={
+                "class_id": class_id,
+                "subject_code": assign.subject.code,
+                "subject_name": assign.subject.name,
+                "teacher": assign.teacher.name,
+                "teacher_userID": assign.teacher.userID
+            }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)
     
+    def post(self, request, class_id, subject_code, teacher_userID):
+        if(AssignClass.objects.filter(class_id__id=class_id, 
+                                      subject__code= subject_code)).exists():
+            
+            return Response({'msg': 'This subject is already assigned to this class'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+            
+        class_id= get_object_or_404(Class, id=class_id)
+        subject= get_object_or_404(Subject, code=subject_code)
+        teacher= get_object_or_404(Teacher, userID= teacher_userID)
+        
+        AssignClass.objects.create(class_id=class_id,
+                    subject=subject,
+                    teacher=teacher)
+        return Response({"msg": "Class has been assigned successfully."}, status=status.HTTP_200_OK)
+    
+    def put(self, request, class_id, subject_code, teacher_userID):
+        
+        serializer = AssignsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        id = serializer.data.get("class_id")
+        if(id!= class_id): 
+            return Response({'msg': 'You cannot modify Class ID'},  status=status.HTTP_400_BAD_REQUEST)
+        
+        new_subject_code= serializer.data.get("subject_code")
+        new_teacher_userID = serializer.data.get("teacher_userID")
+        
+        
+        new_subject= get_object_or_404(Subject, code=new_subject_code)
+        new_teacher= get_object_or_404(Teacher, userID=new_teacher_userID)
+        
+        assign = AssignClass.objects.filter(class_id__id=class_id, 
+                                   subject__code= subject_code,
+                                   teacher__userID= teacher_userID)
+        if not assign.exists():
+            return Response({"msg": "No Assigns found"}, status=status.HTTP_200_OK)
+        
+        assign.update(subject= new_subject,
+                      teacher= new_teacher)
+        
+        return Response({"msg": "Assigns has been updated successfully."}, status=status.HTTP_200_OK)
+    
+    
+    def delete(self, request, class_id, subject_code, teacher_userID):
+        
+        assignedclass = get_object_or_404(AssignClass, class_id__id=class_id,
+                    subject__code= subject_code,
+                    teacher__userID= teacher_userID)
+        
+        assignedclass.delete()
+        
+        return Response({"msg": "Assign has been deleted successfully"}, status=status.HTTP_200_OK)
+        
+
 

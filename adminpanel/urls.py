@@ -11,4 +11,5 @@ urlpatterns = [
     path('subjects/<str:pk>/', Subjects.as_view(), name='Subjects'),
     path('feedback/<str:key>/', FeedbackView.as_view(), name='Feedbacks'),
     path('createattendance/', CreateAttendance.as_view(), name='createattendance'),
+    path('assignclass/<str:class_id>/<str:subject_code>/<str:teacher_userID>/', Assigns.as_view(), name='assignclass'),
 ]
