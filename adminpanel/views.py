@@ -43,11 +43,9 @@ class AddStudent(APIView):
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
 
-        try:
-            user = User.objects.get(email=email)
+        user = User.objects.filter(email=email)
+        if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            pass
 
         if gender is not None:
             if gender.lower() == 'm':
@@ -106,9 +104,9 @@ class AddTeacher(APIView):
         gender = request.data.get('sex')
 
         teachers = Teacher.objects.all()
-        try:
+        if len(teachers) != 0:
             userID = int(list(teachers)[-1].userID)+1
-        except:
+        else:
             userID = 100000
 
         department = get_object_or_404(Department, id=department)
@@ -116,11 +114,9 @@ class AddTeacher(APIView):
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
 
-        try:
-            user = User.objects.get(email=email)
+        user = User.objects.filter(email=email)
+        if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            pass
 
         if gender is not None:
             if gender.lower() == 'm':
@@ -201,7 +197,7 @@ class ClassObject(APIView):
             allclasses = list(Class.objects.all())
             arr = []
             for clas in allclasses:
-                arr += [[clas.year, clas.department.name, clas.section, clas.id]]
+                arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
             arr.sort()
             return Response(arr, status=status.HTTP_200_OK)
         else:
@@ -334,9 +330,11 @@ class CreateAttendance(APIView):
     def post(self, request):
         serializer = CreateAttendanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        
         start_date = serializer.data.get("start_date")
         end_date = serializer.data.get("end_date")
         class_id = serializer.data.get("class_id")
+        
         sdate = date(int(start_date[:4]), int(
             start_date[5:7]), int(start_date[8:]))
         edate = date(int(end_date[:4]), int(end_date[5:7]), int(end_date[8:]))
@@ -362,8 +360,6 @@ class CreateAttendance(APIView):
                         student=student, classattendance=ca, subject=assignedtime.assign.subject)
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
-    
-
     
     
 class Assigns(APIView):
@@ -443,9 +439,6 @@ class Assigns(APIView):
         assignedclass.delete()
         
         return Response({"msg": "Assign has been deleted successfully"}, status=status.HTTP_200_OK)
-        
-
-
 
 
 class AssignTimeSlots(APIView):
@@ -457,9 +450,6 @@ class AssignTimeSlots(APIView):
         assigned_class = get_object_or_404(AssignClass, class_id = class_id,
                                                 subject__code= subject_code,
                                                 teacher__userID= teacher_userID)
-        print(assigned_class)
-       
-        
         assigned_times = AssignTime.objects.filter(assign= assigned_class)
         list=[]
         for time_slot in assigned_times:
@@ -475,15 +465,14 @@ class AssignTimeSlots(APIView):
         assigned_class = get_object_or_404(AssignClass, class_id = class_id,
                                                 subject__code= subject_code,
                                                 teacher__userID= teacher_userID)
-        print(assigned_class)
         serializer = TimeSlotSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         day= serializer.data.get("day")
         period = serializer.data.get("period")
-        if AssignTime.objects.filter(assign= assigned_class,
+        if AssignTime.objects.filter(assign__class_id= class_id,
                                      day=day,
                                      period= period).exists():
-            return Response({'msg': 'Time slot on this day is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Time slot is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
         klass = get_object_or_404(Class, id= class_id)
         teacher = get_object_or_404(Teacher, userID= teacher_userID)
         AssignTime.objects.create(
@@ -497,7 +486,6 @@ class AssignTimeSlots(APIView):
     
     def put(self, request, class_id,subject_code, teacher_userID):
         time_slot_id= class_id
-        print(time_slot_id)
         time_slot = get_object_or_404(AssignTime, id=time_slot_id)
         assigned_class= time_slot.assign
         serializer = TimeSlotSerializer(data=request.data)

@@ -87,6 +87,7 @@ class TeacherOfClass(APIView):
         assignedclasses = AssignClass.objects.all().filter(class_id=classid)
         if feedback == 'feedback':
             student = get_object_or_404(Student, user=user)
+            print('student')
         feedbacks = {}
         arr = []
         for assignedclass in assignedclasses:
@@ -139,8 +140,14 @@ class TeachersInDepartments(APIView):
     def get(self, request, departmentid):
         dept = get_object_or_404(Department, id=departmentid)
         teachers = Teacher.objects.filter(department__id=departmentid)
-        serializer = TeacherSectionSerializer(teachers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        departmentdet = dict()
+        departmentdet["department details"] = {dept.id : dept.name}
+        response = {}
+        if teachers.exists():
+            for teacher in teachers:
+                response[teacher.userID]=teacher.name
+        response = {'teachers' : response}
+        return Response(departmentdet | response, status=status.HTTP_200_OK)
 
 
 class StudentFeedbackView(APIView):
@@ -166,7 +173,7 @@ class StudentFeedbackView(APIView):
         return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
 
 
-# TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
+TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 
@@ -176,21 +183,16 @@ class TimeTable(APIView):
 
     def get(self, request):
         user = return_user(request)
-        classes = AssignClass.objects.filter(teacher__userID=user.userID)
         list = []
         for i in TIME_SLOTS:
             for j in DAYS:
                 time = AssignTime.objects.filter(
                     period=i, day=j, assign__teacher__userID=user.userID)
-
                 if time.exists():
                     time = time[0]
-
-                    dict = {}
                     dict = {"class": time.assign.class_id.id, "subject": time.assign.subject.name,
                             "teacher": time.assign.teacher.name, "period": i, "day": j}
                 else:
-                    dict = {}
                     dict = {"class": "",
                             "subject": "",
                             "teacher": user.name,
@@ -200,21 +202,40 @@ class TimeTable(APIView):
         return Response(list,  status=status.HTTP_200_OK)
 
 
-class StudentsinClassAttendance(APIView):
+class ClassAttendanceObjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
     def get(self, request):
-        serializer = StudentClassAttendanceSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        class_id = serializer.data.get('class_id')
-        date = serializer.data.get('date')
-        period = serializer.data.get('period')
+        userID = return_user(request).userID
+        objects= ClassAttendance.objects.filter(assign__assign__teacher__userID= userID
+        )
+        
+        # print(objects)
+        list = []
+        for object in objects:
+            # print(object.date)
+            dict = {"date": object.date,
+                    "time": object.assign.period,
+                    "class_id": object.assign.class_id.id,
+                    "subject_name": object.assign.assign.subject.name,
+                    "subject_code": object.assign.assign.subject.code,
+                    "teacher_userID": object.assign.assign.teacher.userID
+                    }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)
+
+
+class StudentsinClassAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+
+    def get(self, request, date, class_id, period):
         classattendance = get_object_or_404(
             ClassAttendance, assign__period=period, date=date, assign__class_id=class_id)
         students = StudentAttendance.objects.filter(
             classattendance=classattendance)
-        list = []
+        list = [{"marked" : classattendance.status}]
         for student in students:
             dict = {"name": student.student.name,
                     "userID": student.student.userID,
@@ -222,7 +243,7 @@ class StudentsinClassAttendance(APIView):
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
 
-    def put(self, request):
+    def put(self, request, date, class_id, period):
         data = request.data
         for i in range(len(data)):
             if i == 0:
@@ -235,11 +256,9 @@ class StudentsinClassAttendance(APIView):
                                                         classattendance__date=date)
                 student.is_present = data[i]['is_present']
                 student.save()
-
                 classatt = ClassAttendance.objects.get(date=date,
                                                        assign__class_id=class_id,
                                                        assign__period=period)
                 classatt.status = True
                 classatt.save()
-
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
