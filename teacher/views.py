@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from account.emails import *
 from account.custom_permissions import *
 from django.shortcuts import get_object_or_404
+from datetime import date
+from django.db.utils import IntegrityError
 
 
 def return_user(request):
@@ -262,3 +264,31 @@ class StudentsinClassAttendance(APIView):
                 classatt.status = True
                 classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
+
+
+class CreateTodayAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+
+    def post(self, request, class_id):
+        user = return_user(request)
+        teacher = get_object_or_404(Teacher, user=user)
+        curdate = date.today()
+        curclass = get_object_or_404(Class, id=class_id)
+        students = Student.objects.filter(class_id=curclass)
+        days = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
+                4: 'Thursday', 5: 'Friday', 6: 'Saturday', 0: 'Sunday'}
+        curday = days[int(curdate.strftime('%w'))]
+        assignedtimes = AssignTime.objects.filter(
+           day=curday, class_id=curclass, teacher = teacher)
+        for assignedtime in assignedtimes:
+            try:
+                ca = ClassAttendance.objects.create(
+                    date=curdate, assign=assignedtime)
+                for student in students:
+                    StudentAttendance.objects.create(
+                        student=student, classattendance=ca, subject=assignedtime.assign.subject)
+            except IntegrityError:
+                continue
+
+        return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)

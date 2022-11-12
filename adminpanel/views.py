@@ -10,6 +10,7 @@ from .serializers import *
 from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
+from django.db.utils import IntegrityError
 
 
 class AddStudent(APIView):
@@ -352,12 +353,16 @@ class CreateAttendance(APIView):
                 continue
             assignedtimes = AssignTime.objects.filter(
                 day=curday, class_id=curclass)
-            for assignedtime in assignedtimes:
+
+        for assignedtime in assignedtimes:
+            try:
                 ca = ClassAttendance.objects.create(
                     date=curdate, assign=assignedtime)
                 for student in students:
                     StudentAttendance.objects.create(
                         student=student, classattendance=ca, subject=assignedtime.assign.subject)
+            except IntegrityError:
+                continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     

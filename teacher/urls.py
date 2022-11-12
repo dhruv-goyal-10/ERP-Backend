@@ -17,4 +17,6 @@ urlpatterns = [
     path('timetable/', TimeTable.as_view(), name='TimeTable'),
     path('ClassAttendanceObjects/', ClassAttendanceObjects.as_view(), name='ClassAttendanceObjects'),
     path('StudentsinClassAttendance/<str:date>/<str:class_id>/<str:period>/', StudentsinClassAttendance.as_view(), name='StudentsinClassAttendance'),
+
+    path('CreateTodayAttendance/<str:class_id>/', CreateTodayAttendance.as_view(), name='CreateTodayAttendance')
 ]
