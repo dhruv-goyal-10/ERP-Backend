@@ -10,6 +10,7 @@ from account.custom_permissions import *
 from django.shortcuts import get_object_or_404
 from datetime import date
 from django.db.utils import IntegrityError
+from django.core.paginator import Paginator
 
 
 def return_user(request):
@@ -210,19 +211,18 @@ class ClassAttendanceObjects(APIView):
 
     def get(self, request):
         userID = return_user(request).userID
-        objects= ClassAttendance.objects.filter(assign__assign__teacher__userID= userID
+        allobjects= ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID= userID
         )
         
-        # print(objects)
         list = []
-        for object in objects:
-            # print(object.date)
+        for object in allobjects:
             dict = {"date": object.date,
                     "time": object.assign.period,
                     "class_id": object.assign.class_id.id,
                     "subject_name": object.assign.assign.subject.name,
                     "subject_code": object.assign.assign.subject.code,
-                    "teacher_userID": object.assign.assign.teacher.userID
+                    "teacher_userID": object.assign.assign.teacher.userID,
+                    "status": object.status
                     }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
