@@ -102,11 +102,6 @@ class StudentOverallAttendance(APIView):
             subject_name = subject.subject.name
             subject_code = subject.subject.code
             
-            # total_classes = ClassAttendance.objects.filter(assign__class_id=class_id,
-            #                                                assign__assign__subject__code=subject_code,
-            #                                                status=True
-            #                                                ).count()
-            
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
                                                                 subject__code=subject_code,
                                                                 classattendance__status=True,
@@ -132,7 +127,6 @@ class StudentOverallAttendance(APIView):
                 "attendance_percent": attendance_percent
             }
             list.append(dict)
-            # print(total_classes, attended_classes, attendance_percent)
         return Response(list, status=status.HTTP_200_OK)
 
 

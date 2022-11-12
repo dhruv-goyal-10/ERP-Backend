@@ -10,6 +10,7 @@ from .serializers import *
 from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
+from django.db.utils import IntegrityError
 
 
 class AddStudent(APIView):
@@ -18,10 +19,9 @@ class AddStudent(APIView):
 
     def get(self, request):
         allclasses = list(Class.objects.all())
-        arr = []
+        arr=[]
         for clas in allclasses:
-            arr += [[clas.year, clas.department.name, clas.section, clas.id]]
-        arr.sort()
+            arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
         return Response(arr, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -194,11 +194,10 @@ class ClassObject(APIView):
 
     def get(self, request, pk):
         if pk == 'ALL':
-            allclasses = list(Class.objects.all())
-            arr = []
+            allclasses = list(Class.objects.order_by('year', 'department', 'section'))
+            arr=[]
             for clas in allclasses:
                 arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
-            arr.sort()
             return Response(arr, status=status.HTTP_200_OK)
         else:
             classes = get_object_or_404(Class, id=pk)
@@ -231,10 +230,10 @@ class ClassByDepartment(APIView):
     def get(self, request, departmentid):
         department = get_object_or_404(Department, id=departmentid)
         allclasses = Class.objects.all().filter(department=department)
-        dict = {}
+        arr=[]
         for clas in allclasses:
-            dict[clas.id] = {"year": clas.year, "section": clas.section}
-        return Response(dict,  status=status.HTTP_200_OK)
+            arr += [[clas.id, clas.year, clas.section]]
+        return Response(arr,  status=status.HTTP_200_OK)
 
 
 class Subjects(APIView):
@@ -352,12 +351,16 @@ class CreateAttendance(APIView):
                 continue
             assignedtimes = AssignTime.objects.filter(
                 day=curday, class_id=curclass)
-            for assignedtime in assignedtimes:
+
+        for assignedtime in assignedtimes:
+            try:
                 ca = ClassAttendance.objects.create(
                     date=curdate, assign=assignedtime)
                 for student in students:
                     StudentAttendance.objects.create(
                         student=student, classattendance=ca, subject=assignedtime.assign.subject)
+            except IntegrityError:
+                continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     
@@ -417,12 +420,6 @@ class Assigns(APIView):
                                    teacher__userID= teacher_userID)
         if not assign.exists():
             return Response({"msg": "No Assigns found"}, status=status.HTTP_200_OK)
-        
-        if(AssignClass.objects.filter(class_id__id=class_id, 
-                                      subject__code= new_subject_code)).exists():
-            
-            return Response({'msg': 'This subject is already assigned to this class'}, 
-                            status=status.HTTP_400_BAD_REQUEST)
         
         assign.update(subject= new_subject,
                       teacher= new_teacher)
@@ -510,4 +507,76 @@ class AssignTimeSlots(APIView):
         time_slot.delete()
        
         return Response({"msg": "Time Slot has been deleted successfully"}, status=status.HTTP_200_OK)
+
+
+class StudentAttendanceList(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+
+    def get(self, request, studentid):
+        students = Student.objects.filter(userID=studentid)
+        classid = student.class_id
+        list = []
+        for student in students:
+            total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
+                                                                classattendance__status=True,
+                                                                student__userID=student.userID).count()
+            
+            attended_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
+                                                                classattendance__status=True,
+                                                                student__userID=student.userID,
+                                                                is_present=True).count()
+            
+            if total_classes == 0:
+                attendance_percent = 0
+            else:
+                attendance_percent = round(
+                    attended_classes / total_classes * 100, 1)
+            dict = {}
+            dict = {
+                "student_name": student.name,
+                "userID": student.userID,
+                "attendance_percent": attendance_percent
+            }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)
         
+
+class StudentSubjectAttendance(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request, studentid):
+        student = get_object_or_404(Student, userID = studentid)
+        class_id = student.class_id
+        subjects = AssignClass.objects.filter(class_id=class_id)
+        list = []
+        for subject in subjects:
+            subject_name = subject.subject.name
+            subject_code = subject.subject.code
+            
+            total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
+                                                                subject__code=subject_code,
+                                                                classattendance__status=True,
+                                                                student__userID=student.userID).count()
+            
+            attended_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
+                                                                subject__code=subject_code,
+                                                                classattendance__status=True,
+                                                                student__userID=student.userID,
+                                                                is_present=True).count()
+            if total_classes == 0:
+                attendance_percent = 0
+            else:
+                attendance_percent = round(
+                    attended_classes / total_classes * 100, 1)
+            dict = {}
+            dict = {
+                "subject_code": subject_code,
+                "subject_name": subject_name,
+                "attended_classes": attended_classes,
+                "total_classes": total_classes,
+                "attendance_percent": attendance_percent
+            }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)
