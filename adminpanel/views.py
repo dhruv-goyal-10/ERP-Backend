@@ -19,10 +19,9 @@ class AddStudent(APIView):
 
     def get(self, request):
         allclasses = list(Class.objects.all())
-        arr = []
+        arr=[]
         for clas in allclasses:
-            arr += [[clas.year, clas.department.name, clas.section, clas.id]]
-        arr.sort()
+            arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
         return Response(arr, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -195,11 +194,10 @@ class ClassObject(APIView):
 
     def get(self, request, pk):
         if pk == 'ALL':
-            allclasses = list(Class.objects.all())
-            arr = []
+            allclasses = list(Class.objects.order_by('year', 'department', 'section'))
+            arr=[]
             for clas in allclasses:
                 arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
-            arr.sort()
             return Response(arr, status=status.HTTP_200_OK)
         else:
             classes = get_object_or_404(Class, id=pk)
@@ -232,10 +230,10 @@ class ClassByDepartment(APIView):
     def get(self, request, departmentid):
         department = get_object_or_404(Department, id=departmentid)
         allclasses = Class.objects.all().filter(department=department)
-        dict = {}
+        arr=[]
         for clas in allclasses:
-            dict[clas.id] = {"year": clas.year, "section": clas.section}
-        return Response(dict,  status=status.HTTP_200_OK)
+            arr += [[clas.id, clas.year, clas.section]]
+        return Response(arr,  status=status.HTTP_200_OK)
 
 
 class Subjects(APIView):
@@ -423,12 +421,6 @@ class Assigns(APIView):
         if not assign.exists():
             return Response({"msg": "No Assigns found"}, status=status.HTTP_200_OK)
         
-        if(AssignClass.objects.filter(class_id__id=class_id, 
-                                      subject__code= new_subject_code)).exists():
-            
-            return Response({'msg': 'This subject is already assigned to this class'}, 
-                            status=status.HTTP_400_BAD_REQUEST)
-        
         assign.update(subject= new_subject,
                       teacher= new_teacher)
         
@@ -573,7 +565,6 @@ class StudentSubjectAttendance(APIView):
                                                                 classattendance__status=True,
                                                                 student__userID=student.userID,
                                                                 is_present=True).count()
-            
             if total_classes == 0:
                 attendance_percent = 0
             else:
@@ -588,5 +579,4 @@ class StudentSubjectAttendance(APIView):
                 "attendance_percent": attendance_percent
             }
             list.append(dict)
-            # print(total_classes, attended_classes, attendance_percent)
         return Response(list, status=status.HTTP_200_OK)
