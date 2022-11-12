@@ -166,7 +166,7 @@ class StudentFeedbackView(APIView):
         return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
 
 
-# TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
+TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 
@@ -198,6 +198,30 @@ class TimeTable(APIView):
                             "day": j}
                 list.append(dict)
         return Response(list,  status=status.HTTP_200_OK)
+
+
+class ClassAttendanceObjects(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+
+    def get(self, request):
+        userID = return_user(request).userID
+        objects= ClassAttendance.objects.filter(assign__assign__teacher__userID= userID
+        )
+        
+        # print(objects)
+        list = []
+        for object in objects:
+            # print(object.date)
+            dict = {"date": object.date,
+                    "time": object.assign.period,
+                    "class_id": object.assign.class_id.id,
+                    "subject_name": object.assign.assign.subject.name,
+                    "subject_code": object.assign.assign.subject.code,
+                    "teacher_userID": object.assign.assign.teacher.userID
+                    }
+            list.append(dict)
+        return Response(list, status=status.HTTP_200_OK)
 
 
 class StudentsinClassAttendance(APIView):
