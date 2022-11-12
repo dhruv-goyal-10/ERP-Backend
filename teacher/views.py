@@ -208,10 +208,10 @@ class StudentsinClassAttendance(APIView):
 
     def get(self, request, date, class_id, period):
         classattendance = get_object_or_404(
-            ClassAttendance, assign__period=period, date=date, assign__class_id=class_id, status=True)
+            ClassAttendance, assign__period=period, date=date, assign__class_id=class_id)
         students = StudentAttendance.objects.filter(
             classattendance=classattendance)
-        list = []
+        list = [{"marked" : classattendance.status}]
         for student in students:
             dict = {"name": student.student.name,
                     "userID": student.student.userID,
