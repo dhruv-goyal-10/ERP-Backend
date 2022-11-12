@@ -10,7 +10,8 @@ from account.custom_permissions import *
 from django.shortcuts import get_object_or_404
 from datetime import date
 from django.db.utils import IntegrityError
-from django.core.paginator import Paginator
+from .custompaginations import PaginationHandlerMixin
+from rest_framework.pagination import PageNumberPagination
 
 
 def return_user(request):
@@ -264,13 +265,13 @@ class StudentsinClassAttendance(APIView):
                 classatt.status = True
                 classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
-
-
-class CreateTodayAttendance(APIView):
+ 
+class CreateTodayAttendance(APIView, PaginationHandlerMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
-
+    
     def post(self, request, class_id):
+        
         user = return_user(request)
         teacher = get_object_or_404(Teacher, user=user)
         curdate = date.today()
@@ -292,3 +293,33 @@ class CreateTodayAttendance(APIView):
                 continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
+    
+# ClassAttendanceObjects API (with Pagination)
+    
+# class Basic_pagination(PageNumberPagination):
+#     page_size= 5
+#     # page_size_query_param = 'limit'  
+    
+# class ClassAttendanceObjects(APIView, PaginationHandlerMixin):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+#     pagination_class = Basic_pagination
+
+#     def get(self, request):
+#         userID = return_user(request).userID
+#         allobjects= ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID= userID
+#         )
+        
+#         list = []
+#         for object in allobjects:
+#             dict = {"date": object.date,
+#                     "time": object.assign.period,
+#                     "class_id": object.assign.class_id.id,
+#                     "subject_name": object.assign.assign.subject.name,
+#                     "subject_code": object.assign.assign.subject.code,
+#                     "teacher_userID": object.assign.assign.teacher.userID,
+#                     "status": object.status
+#                     }
+#             list.append(dict)
+#         page = self.paginate_queryset(list)
+#         return self.get_paginated_response(page)
