@@ -78,11 +78,11 @@ class SubjectSectionSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class TeacherSectionSerializer(ModelSerializer):
+# class TeacherSectionSerializer(ModelSerializer):
 
-    class Meta:
-        model = Teacher
-        fields = '__all__'
+#     class Meta:
+#         model = Teacher
+#         fields = '__all__'
 
 
 class AssignTimeSerializer(ModelSerializer):
@@ -108,11 +108,6 @@ class CreateAttendanceSerializer(serializers.Serializer):
     end_date = serializers.DateField()
     class_id = serializers.CharField(max_length = 10)
     
-    
-class StudentClassAttendanceSerializer(serializers.Serializer):
-    date = serializers.DateField()
-    class_id = serializers.CharField(max_length = 10)
-    period = serializers.CharField(max_length=50)
     
 class StudentAttendanceSerializer(ModelSerializer):
     class Meta:

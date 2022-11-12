@@ -43,11 +43,9 @@ class AddStudent(APIView):
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
 
-        try:
-            user = User.objects.get(email=email)
+        user = User.objects.filter(email=email)
+        if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            pass
 
         if gender is not None:
             if gender.lower() == 'm':
@@ -106,9 +104,9 @@ class AddTeacher(APIView):
         gender = request.data.get('sex')
 
         teachers = Teacher.objects.all()
-        try:
+        if len(teachers) != 0:
             userID = int(list(teachers)[-1].userID)+1
-        except:
+        else:
             userID = 100000
 
         department = get_object_or_404(Department, id=department)
@@ -116,11 +114,9 @@ class AddTeacher(APIView):
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
 
-        try:
-            user = User.objects.get(email=email)
+        user = User.objects.filter(email=email)
+        if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            pass
 
         if gender is not None:
             if gender.lower() == 'm':
@@ -201,7 +197,7 @@ class ClassObject(APIView):
             allclasses = list(Class.objects.all())
             arr = []
             for clas in allclasses:
-                arr += [[clas.year, clas.department.name, clas.section, clas.id]]
+                arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
             arr.sort()
             return Response(arr, status=status.HTTP_200_OK)
         else:
@@ -365,8 +361,6 @@ class CreateAttendance(APIView):
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     
-
-    
     
 class Assigns(APIView):
     authentication_classes = [JWTAuthentication]
@@ -445,9 +439,6 @@ class Assigns(APIView):
         assignedclass.delete()
         
         return Response({"msg": "Assign has been deleted successfully"}, status=status.HTTP_200_OK)
-        
-
-
 
 
 class AssignTimeSlots(APIView):
@@ -459,9 +450,6 @@ class AssignTimeSlots(APIView):
         assigned_class = get_object_or_404(AssignClass, class_id = class_id,
                                                 subject__code= subject_code,
                                                 teacher__userID= teacher_userID)
-        print(assigned_class)
-       
-        
         assigned_times = AssignTime.objects.filter(assign= assigned_class)
         list=[]
         for time_slot in assigned_times:
