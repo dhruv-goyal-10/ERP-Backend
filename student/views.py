@@ -101,15 +101,23 @@ class StudentOverallAttendance(APIView):
         for subject in subjects:
             subject_name = subject.subject.name
             subject_code = subject.subject.code
-            total_classes = ClassAttendance.objects.filter(assign__class_id=class_id,
-                                                           assign__assign__subject__code=subject_code,
-                                                           status=True
-                                                           ).count()
+            
+            # total_classes = ClassAttendance.objects.filter(assign__class_id=class_id,
+            #                                                assign__assign__subject__code=subject_code,
+            #                                                status=True
+            #                                                ).count()
+            
+            total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
+                                                                subject__code=subject_code,
+                                                                classattendance__status=True,
+                                                                student__userID=student.userID).count()
+            
             attended_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
                                                                 subject__code=subject_code,
                                                                 classattendance__status=True,
                                                                 student__userID=student.userID,
                                                                 is_present=True).count()
+            
             if total_classes == 0:
                 attendance_percent = 0
             else:
