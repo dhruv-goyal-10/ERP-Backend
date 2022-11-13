@@ -13,6 +13,8 @@ from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
 
 
+# 1- API for adding a Student
+
 class AddStudent(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -82,6 +84,7 @@ class AddStudent(APIView):
             curstu.save()
         return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
 
+# 2- API for adding a Teacher
 
 class AddTeacher(APIView):
     authentication_classes = [JWTAuthentication]
@@ -153,6 +156,7 @@ class AddTeacher(APIView):
             curtea.save()
         return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
 
+# 3- API for performing CRUD operations on Departments 
 
 class Departments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -187,6 +191,7 @@ class Departments(APIView):
         department.delete()
         return Response({'msg': 'Department deleted successfully'},  status=status.HTTP_200_OK)
 
+# 4- API for performing CRUD operations on Classes
 
 class ClassObject(APIView):
     authentication_classes = [JWTAuthentication]
@@ -222,7 +227,7 @@ class ClassObject(APIView):
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
 
-
+# 5- API for getting classes by their departments
 class ClassByDepartment(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -235,6 +240,7 @@ class ClassByDepartment(APIView):
             arr += [[clas.id, clas.year, clas.section]]
         return Response(arr,  status=status.HTTP_200_OK)
 
+# 6- API for performing CRUD operations on Subjects
 
 class Subjects(APIView):
     authentication_classes = [JWTAuthentication]
@@ -267,7 +273,7 @@ class Subjects(APIView):
         subject.delete()
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
 
-
+# 7- API for viewing Feedbacks
 class FeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -321,7 +327,7 @@ class FeedbackView(APIView):
             resdict["averagefeed"] = avgfeed
         return Response(resdict,  status=status.HTTP_200_OK)
 
-
+# 8- API for creating attendance slots in a date range 
 class CreateAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -364,7 +370,7 @@ class CreateAttendance(APIView):
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     
-    
+# 9- API for performing CRUD operations of assigning (teacher and subject) to a class
 class Assigns(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -437,6 +443,7 @@ class Assigns(APIView):
         
         return Response({"msg": "Assign has been deleted successfully"}, status=status.HTTP_200_OK)
 
+# 10- API for performing CRUD operations of assigning day and period to a Assigned Class
 
 class AssignTimeSlots(APIView):
     authentication_classes = [JWTAuthentication]
@@ -508,6 +515,7 @@ class AssignTimeSlots(APIView):
        
         return Response({"msg": "Time Slot has been deleted successfully"}, status=status.HTTP_200_OK)
 
+# 11- API for viewing the list of Students and their Attendance Percentage
 
 class StudentAttendanceList(APIView):
     authentication_classes = [JWTAuthentication]
@@ -541,6 +549,7 @@ class StudentAttendanceList(APIView):
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
         
+# 12- API for viewing the Attendance of all the subjects of a student
 
 class StudentSubjectAttendance(APIView):
     authentication_classes = [JWTAuthentication]

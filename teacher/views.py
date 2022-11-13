@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from datetime import date
 from django.db.utils import IntegrityError
 
+# This function fetches the user from its Access Token
 
 def return_user(request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -21,6 +22,7 @@ def return_user(request):
         return user[0]
 
 
+# 1- API for viewing the own profile (Teacher profile)
 class TProfileDetails(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -45,6 +47,7 @@ class TProfileDetails(APIView):
         user.save()
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
+# 2- API for getting the list of students in a particular class
 
 class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
@@ -76,6 +79,8 @@ class StudentInClass(APIView):
             response = {"classdetails": classdetails, "students": dict}
         return Response(response, status=status.HTTP_200_OK)
 
+
+# 3- API for getting the list of teachers assigned to a  particular class
 
 class TeacherOfClass(APIView):
     authentication_classes = [JWTAuthentication]
@@ -109,6 +114,8 @@ class TeacherOfClass(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
+# 4- API for getting the list of classes assigned to a particular teacher
+
 class ClassOfTeacher(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
@@ -123,6 +130,7 @@ class ClassOfTeacher(APIView):
         response = {"classes": arr}
         return Response(response, status=status.HTTP_200_OK)
 
+# 5- API for getting the list of subjects in a particular department
 
 class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -134,6 +142,7 @@ class SubjectsInDepartments(APIView):
         serializer = SubjectSectionSerializer(subjects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# 6- API for getting the list of teachers in a particular department
 
 class TeachersInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -151,7 +160,7 @@ class TeachersInDepartments(APIView):
         response = {'teachers' : response}
         return Response(departmentdet | response, status=status.HTTP_200_OK)
 
-
+# 7- API for giving feedback to a particular student
 class StudentFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -178,6 +187,7 @@ class StudentFeedbackView(APIView):
 TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
+# 8- API for viewing TimeTable (Teacher side)
 
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
@@ -203,7 +213,7 @@ class TimeTable(APIView):
                 list.append(dict)
         return Response(list,  status=status.HTTP_200_OK)
 
-
+# 9- API for getting the list of all the schedules of assigned classes with their attendance status
 class ClassAttendanceObjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
@@ -227,6 +237,7 @@ class ClassAttendanceObjects(APIView):
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
 
+# 10- API for taking the attendance of the students of particular ClassAttendance Object
 
 class StudentsinClassAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -265,6 +276,7 @@ class StudentsinClassAttendance(APIView):
                 classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
 
+# 11- API for creating only today's ClassAttendance Objects for all the classes assigned to the teacher
 
 class CreateTodayAttendance(APIView):
     authentication_classes = [JWTAuthentication]
