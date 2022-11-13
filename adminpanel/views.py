@@ -358,15 +358,15 @@ class CreateAttendance(APIView):
             assignedtimes = AssignTime.objects.filter(
                 day=curday, class_id=curclass)
 
-        for assignedtime in assignedtimes:
-            try:
-                ca = ClassAttendance.objects.create(
-                    date=curdate, assign=assignedtime)
-                for student in students:
-                    StudentAttendance.objects.create(
-                        student=student, classattendance=ca, subject=assignedtime.assign.subject)
-            except IntegrityError:
-                continue
+            for assignedtime in assignedtimes:
+                try:
+                    ca = ClassAttendance.objects.create(
+                        date=curdate, assign=assignedtime)
+                    for student in students:
+                        StudentAttendance.objects.create(
+                            student=student, classattendance=ca, subject=assignedtime.assign.subject)
+                except IntegrityError:
+                    continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     
