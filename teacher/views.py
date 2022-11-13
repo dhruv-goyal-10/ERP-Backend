@@ -270,25 +270,28 @@ class CreateTodayAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def post(self, request, class_id):
+    def post(self, request):
         user = return_user(request)
         teacher = get_object_or_404(Teacher, user=user)
         curdate = date.today()
-        curclass = get_object_or_404(Class, id=class_id)
-        students = Student.objects.filter(class_id=curclass)
+        curdate = curdate + timedelta(days=1)
         days = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
                 4: 'Thursday', 5: 'Friday', 6: 'Saturday', 0: 'Sunday'}
         curday = days[int(curdate.strftime('%w'))]
-        assignedtimes = AssignTime.objects.filter(
-           day=curday, class_id=curclass, teacher = teacher)
-        for assignedtime in assignedtimes:
-            try:
-                ca = ClassAttendance.objects.create(
-                    date=curdate, assign=assignedtime)
-                for student in students:
-                    StudentAttendance.objects.create(
-                        student=student, classattendance=ca, subject=assignedtime.assign.subject)
-            except IntegrityError:
-                continue
+        assignedclasses = AssignClass.objects.filter(teacher = teacher)
+        for assignedclass in assignedclasses:
+            curclass = assignedclass.class_id
+            assignedtimes = AssignTime.objects.filter(
+                day=curday, class_id=curclass, teacher = teacher)
+            for assignedtime in assignedtimes:
+                try:
+                    ca = ClassAttendance.objects.create(
+                        date=curdate, assign=assignedtime)
+                    students = Student.objects.filter(class_id=curclass)
+                    for student in students:
+                        StudentAttendance.objects.create(
+                            student=student, classattendance=ca, subject=assignedtime.assign.subject)
+                except IntegrityError:
+                    continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)

@@ -519,9 +519,8 @@ class StudentAttendanceList(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, studentid):
-        students = Student.objects.filter(userID=studentid)
-        classid = student.class_id
+    def get(self, request, classid):
+        students = Student.objects.filter(class_id = classid)
         list = []
         for student in students:
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
