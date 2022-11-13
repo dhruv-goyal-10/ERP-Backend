@@ -11,6 +11,7 @@ from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
+from account.views import checkemail
 
 
 # 1- API for adding a Student
@@ -35,6 +36,9 @@ class AddStudent(APIView):
         classid = serializer.data.get('class_id')
         gender = request.data.get('sex')
 
+        if checkemail(email):
+            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+
         students = list(Student.objects.all())
         if len(students) != 0:
             userID = int(students[-1].userID)+1
@@ -44,7 +48,6 @@ class AddStudent(APIView):
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
-
         user = User.objects.filter(email=email)
         if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
@@ -105,6 +108,9 @@ class AddTeacher(APIView):
         DOB = serializer.data.get('DOB')
         department = serializer.data.get('department')
         gender = request.data.get('sex')
+
+        if checkemail(email):
+            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
         teachers = Teacher.objects.all()
         if len(teachers) != 0:
@@ -521,9 +527,8 @@ class StudentAttendanceList(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, studentid):
-        students = Student.objects.filter(userID=studentid)
-        classid = student.class_id
+    def get(self, request, classid):
+        students = Student.objects.filter(class_id = classid)
         list = []
         for student in students:
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
@@ -589,3 +594,13 @@ class StudentSubjectAttendance(APIView):
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
+
+
+class DeleteUser(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def delete(self, request, userID):
+        user = get_object_or_404(User, userID = userID)
+        user.delete()
+        return Response({"msg":"user deleted !!"}, status=status.HTTP_200_OK)
