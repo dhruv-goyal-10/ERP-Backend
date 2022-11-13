@@ -604,3 +604,24 @@ class DeleteUser(APIView):
         user = get_object_or_404(User, userID = userID)
         user.delete()
         return Response({"msg":"user deleted !!"}, status=status.HTTP_200_OK)
+
+
+class Search(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request, search):
+        students = Student.objects.filter(name__icontains=search)
+        teachers = Teacher.objects.filter(name__icontains=search)
+        departments = Department.objects.filter(name__icontains=search)
+        classes = Class.objects.filter(id__icontains=search)
+        dict = {"students":[], "teachers":[], "departments":[], "classes":[]}
+        for student in students:
+            dict["students"].append(student.name)
+        for teacher in teachers:
+            dict["teachers"].append(teacher.name)
+        for department in departments:
+            dict["departments"].append(department.name)
+        for clas in classes:
+            dict["classes"].append(clas.id)
+        return Response(dict, status=status.HTTP_200_OK)
