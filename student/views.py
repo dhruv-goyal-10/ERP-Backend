@@ -7,7 +7,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from teacher.views import return_user
+from datetime import date
 
+# 1- API for viewing the own profile (student profile)
 
 class SProfileDetails(APIView):
     authentication_classes = [JWTAuthentication]
@@ -32,6 +34,7 @@ class SProfileDetails(APIView):
         user.save()
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
+# 2- API for giving feedback to the teacher
 
 class TeacherFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -61,6 +64,7 @@ TIME_SLOTS = ['8:30 - 9:20', '9:20 - 10:10',
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 
+# 3- API for getting the details of his/her class TimeTable
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -87,6 +91,7 @@ class TimeTable(APIView):
                 list.append(dict)
         return Response(list,  status=status.HTTP_200_OK)
 
+# 4- API for getting Overall attendance of student
 
 class StudentOverallAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -129,6 +134,7 @@ class StudentOverallAttendance(APIView):
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
 
+# 5- API for fetching attendance of a particular subject of a student
 
 class StudentSubjectAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -140,6 +146,7 @@ class StudentSubjectAttendance(APIView):
         attendances = StudentAttendance.objects.filter(subject__code=subject_code,
                                                        student=student,
                                                        classattendance__date__month=month,
+                                                       classattendance__date__year=date.today().year,
                                                        classattendance__status = True)
         list = []
         for attendance in attendances:
@@ -152,3 +159,6 @@ class StudentSubjectAttendance(APIView):
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
+    
+    
+

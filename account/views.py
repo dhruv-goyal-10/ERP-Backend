@@ -93,6 +93,14 @@ def checkpassword(password, confirmpassword):
         return 'conditions not fulfilled'
 
 
+def checkemail(email):
+    reg = "^[A-Za-z0-9._%+-]+@gmail\.com$"
+    pat = re.compile(reg)
+    mat = re.search(pat, email)
+    if not mat:
+        return True
+
+
 class VerifyOTPView(APIView):
 
     def post(self, request):
@@ -199,10 +207,11 @@ class UpdateEmail(APIView):
         newemail = newemail.lower()
         user = User.objects.filter(email=newemail)
         if user.exists():
-            print(loginuser.email, newemail)
             if loginuser.email == newemail:
                 return Response({'msg': 'Previous Email entered'}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'msg': 'User with this email already existsss'}, status=status.HTTP_400_BAD_REQUEST)
+        elif checkemail(newemail):
+            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             EMAIL.send_otp_for_email_verification(loginuser, newemail)
             return Response({'msg': 'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)

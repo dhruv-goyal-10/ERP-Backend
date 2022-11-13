@@ -15,4 +15,5 @@ urlpatterns = [
     path('assigntimeslots/<str:class_id>/<str:subject_code>/<str:teacher_userID>/', AssignTimeSlots.as_view(), name='assigntimeslots'),
     path('studentattendancelist/<str:classid>/', StudentAttendanceList.as_view(), name='attendancelist'),
     path('studentsubjectattendancelist/<str:studentid>/', StudentSubjectAttendance.as_view(), name='studentsubjectattendance'),
+    path('deleteuser/<str:userID>/', DeleteUser.as_view(), name='deleteuser')
 ]

@@ -10,7 +10,10 @@ from account.custom_permissions import *
 from django.shortcuts import get_object_or_404
 from datetime import date
 from django.db.utils import IntegrityError
+from .custompaginations import PaginationHandlerMixin
+from rest_framework.pagination import PageNumberPagination
 
+# This function fetches the user from its Access Token
 
 def return_user(request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -21,6 +24,7 @@ def return_user(request):
         return user[0]
 
 
+# 1- API for viewing the own profile (Teacher profile)
 class TProfileDetails(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -45,6 +49,7 @@ class TProfileDetails(APIView):
         user.save()
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
+# 2- API for getting the list of students in a particular class
 
 class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
@@ -76,6 +81,8 @@ class StudentInClass(APIView):
             response = {"classdetails": classdetails, "students": dict}
         return Response(response, status=status.HTTP_200_OK)
 
+
+# 3- API for getting the list of teachers assigned to a  particular class
 
 class TeacherOfClass(APIView):
     authentication_classes = [JWTAuthentication]
@@ -109,6 +116,8 @@ class TeacherOfClass(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
+# 4- API for getting the list of classes assigned to a particular teacher
+
 class ClassOfTeacher(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
@@ -123,6 +132,7 @@ class ClassOfTeacher(APIView):
         response = {"classes": arr}
         return Response(response, status=status.HTTP_200_OK)
 
+# 5- API for getting the list of subjects in a particular department
 
 class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -134,6 +144,7 @@ class SubjectsInDepartments(APIView):
         serializer = SubjectSectionSerializer(subjects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# 6- API for getting the list of teachers in a particular department
 
 class TeachersInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -151,7 +162,7 @@ class TeachersInDepartments(APIView):
         response = {'teachers' : response}
         return Response(departmentdet | response, status=status.HTTP_200_OK)
 
-
+# 7- API for giving feedback to a particular student
 class StudentFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -178,6 +189,7 @@ class StudentFeedbackView(APIView):
 TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
+# 8- API for viewing TimeTable (Teacher side)
 
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
@@ -203,30 +215,30 @@ class TimeTable(APIView):
                 list.append(dict)
         return Response(list,  status=status.HTTP_200_OK)
 
-
+# 9- API for getting the list of all the schedules of assigned classes with their attendance status
 class ClassAttendanceObjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
     def get(self, request):
         userID = return_user(request).userID
-        objects= ClassAttendance.objects.filter(assign__assign__teacher__userID= userID
+        allobjects= ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID= userID
         )
         
-        # print(objects)
         list = []
-        for object in objects:
-            # print(object.date)
+        for object in allobjects:
             dict = {"date": object.date,
                     "time": object.assign.period,
                     "class_id": object.assign.class_id.id,
                     "subject_name": object.assign.assign.subject.name,
                     "subject_code": object.assign.assign.subject.code,
-                    "teacher_userID": object.assign.assign.teacher.userID
+                    "teacher_userID": object.assign.assign.teacher.userID,
+                    "status": object.status
                     }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
 
+# 10- API for taking the attendance of the students of particular ClassAttendance Object
 
 class StudentsinClassAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -265,30 +277,64 @@ class StudentsinClassAttendance(APIView):
                 classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
 
+# 11- API for creating only today's ClassAttendance Objects for all the classes assigned to the teacher
 
-class CreateTodayAttendance(APIView):
+class CreateTodayAttendance(APIView, PaginationHandlerMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def post(self, request, class_id):
+    def post(self, request):
         user = return_user(request)
         teacher = get_object_or_404(Teacher, user=user)
         curdate = date.today()
-        curclass = get_object_or_404(Class, id=class_id)
-        students = Student.objects.filter(class_id=curclass)
+        curdate = curdate + timedelta(days=1)
         days = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
                 4: 'Thursday', 5: 'Friday', 6: 'Saturday', 0: 'Sunday'}
         curday = days[int(curdate.strftime('%w'))]
-        assignedtimes = AssignTime.objects.filter(
-           day=curday, class_id=curclass, teacher = teacher)
-        for assignedtime in assignedtimes:
-            try:
-                ca = ClassAttendance.objects.create(
-                    date=curdate, assign=assignedtime)
-                for student in students:
-                    StudentAttendance.objects.create(
-                        student=student, classattendance=ca, subject=assignedtime.assign.subject)
-            except IntegrityError:
-                continue
+        assignedclasses = AssignClass.objects.filter(teacher = teacher)
+        for assignedclass in assignedclasses:
+            curclass = assignedclass.class_id
+            assignedtimes = AssignTime.objects.filter(
+                day=curday, class_id=curclass, teacher = teacher)
+            for assignedtime in assignedtimes:
+                try:
+                    ca = ClassAttendance.objects.create(
+                        date=curdate, assign=assignedtime)
+                    students = Student.objects.filter(class_id=curclass)
+                    for student in students:
+                        StudentAttendance.objects.create(
+                            student=student, classattendance=ca, subject=assignedtime.assign.subject)
+                except IntegrityError:
+                    continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
+    
+# ClassAttendanceObjects API (with Pagination)
+    
+# class Basic_pagination(PageNumberPagination):
+#     page_size= 5
+#     # page_size_query_param = 'limit'  
+    
+# class ClassAttendanceObjects(APIView, PaginationHandlerMixin):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+#     pagination_class = Basic_pagination
+
+#     def get(self, request):
+#         userID = return_user(request).userID
+#         allobjects= ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID= userID
+#         )
+        
+#         list = []
+#         for object in allobjects:
+#             dict = {"date": object.date,
+#                     "time": object.assign.period,
+#                     "class_id": object.assign.class_id.id,
+#                     "subject_name": object.assign.assign.subject.name,
+#                     "subject_code": object.assign.assign.subject.code,
+#                     "teacher_userID": object.assign.assign.teacher.userID,
+#                     "status": object.status
+#                     }
+#             list.append(dict)
+#         page = self.paginate_queryset(list)
+#         return self.get_paginated_response(page)

@@ -11,7 +11,10 @@ from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
+from account.views import checkemail
 
+
+# 1- API for adding a Student
 
 class AddStudent(APIView):
     authentication_classes = [JWTAuthentication]
@@ -33,6 +36,9 @@ class AddStudent(APIView):
         classid = serializer.data.get('class_id')
         gender = request.data.get('sex')
 
+        if checkemail(email):
+            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+
         students = list(Student.objects.all())
         if len(students) != 0:
             userID = int(students[-1].userID)+1
@@ -42,7 +48,6 @@ class AddStudent(APIView):
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
-
         user = User.objects.filter(email=email)
         if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
@@ -82,6 +87,7 @@ class AddStudent(APIView):
             curstu.save()
         return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
 
+# 2- API for adding a Teacher
 
 class AddTeacher(APIView):
     authentication_classes = [JWTAuthentication]
@@ -102,6 +108,9 @@ class AddTeacher(APIView):
         DOB = serializer.data.get('DOB')
         department = serializer.data.get('department')
         gender = request.data.get('sex')
+
+        if checkemail(email):
+            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
         teachers = Teacher.objects.all()
         if len(teachers) != 0:
@@ -153,6 +162,7 @@ class AddTeacher(APIView):
             curtea.save()
         return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
 
+# 3- API for performing CRUD operations on Departments 
 
 class Departments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -187,6 +197,7 @@ class Departments(APIView):
         department.delete()
         return Response({'msg': 'Department deleted successfully'},  status=status.HTTP_200_OK)
 
+# 4- API for performing CRUD operations on Classes
 
 class ClassObject(APIView):
     authentication_classes = [JWTAuthentication]
@@ -222,7 +233,7 @@ class ClassObject(APIView):
         clas.delete()
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
 
-
+# 5- API for getting classes by their departments
 class ClassByDepartment(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -235,6 +246,7 @@ class ClassByDepartment(APIView):
             arr += [[clas.id, clas.year, clas.section]]
         return Response(arr,  status=status.HTTP_200_OK)
 
+# 6- API for performing CRUD operations on Subjects
 
 class Subjects(APIView):
     authentication_classes = [JWTAuthentication]
@@ -267,7 +279,7 @@ class Subjects(APIView):
         subject.delete()
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
 
-
+# 7- API for viewing Feedbacks
 class FeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -321,7 +333,7 @@ class FeedbackView(APIView):
             resdict["averagefeed"] = avgfeed
         return Response(resdict,  status=status.HTTP_200_OK)
 
-
+# 8- API for creating attendance slots in a date range 
 class CreateAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -352,19 +364,19 @@ class CreateAttendance(APIView):
             assignedtimes = AssignTime.objects.filter(
                 day=curday, class_id=curclass)
 
-        for assignedtime in assignedtimes:
-            try:
-                ca = ClassAttendance.objects.create(
-                    date=curdate, assign=assignedtime)
-                for student in students:
-                    StudentAttendance.objects.create(
-                        student=student, classattendance=ca, subject=assignedtime.assign.subject)
-            except IntegrityError:
-                continue
+            for assignedtime in assignedtimes:
+                try:
+                    ca = ClassAttendance.objects.create(
+                        date=curdate, assign=assignedtime)
+                    for student in students:
+                        StudentAttendance.objects.create(
+                            student=student, classattendance=ca, subject=assignedtime.assign.subject)
+                except IntegrityError:
+                    continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
     
-    
+# 9- API for performing CRUD operations of assigning (teacher and subject) to a class
 class Assigns(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -437,6 +449,7 @@ class Assigns(APIView):
         
         return Response({"msg": "Assign has been deleted successfully"}, status=status.HTTP_200_OK)
 
+# 10- API for performing CRUD operations of assigning day and period to a Assigned Class
 
 class AssignTimeSlots(APIView):
     authentication_classes = [JWTAuthentication]
@@ -508,14 +521,14 @@ class AssignTimeSlots(APIView):
        
         return Response({"msg": "Time Slot has been deleted successfully"}, status=status.HTTP_200_OK)
 
+# 11- API for viewing the list of Students and their Attendance Percentage
 
 class StudentAttendanceList(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
-    def get(self, request, studentid):
-        students = Student.objects.filter(userID=studentid)
-        classid = student.class_id
+    def get(self, request, classid):
+        students = Student.objects.filter(class_id = classid)
         list = []
         for student in students:
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
@@ -541,6 +554,7 @@ class StudentAttendanceList(APIView):
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
         
+# 12- API for viewing the Attendance of all the subjects of a student
 
 class StudentSubjectAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -580,3 +594,13 @@ class StudentSubjectAttendance(APIView):
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
+
+
+class DeleteUser(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def delete(self, request, userID):
+        user = get_object_or_404(User, userID = userID)
+        user.delete()
+        return Response({"msg":"user deleted !!"}, status=status.HTTP_200_OK)
