@@ -39,15 +39,16 @@ class AddStudent(APIView):
         if checkemail(email):
             return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
-        students = list(Student.objects.all())
+        students = list(Student.objects.all().order_by('-userID'))
         if len(students) != 0:
-            userID = int(students[-1].userID)+1
+            userID = int(students[0].userID)+1
         else:
             userID = 200000
         classid = get_object_or_404(Class, id=classid)
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
+        email = email.lower()
         user = User.objects.filter(email=email)
         if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
@@ -112,9 +113,9 @@ class AddTeacher(APIView):
         if checkemail(email):
             return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
-        teachers = Teacher.objects.all()
+        teachers = Teacher.objects.all().order_by('-userID')
         if len(teachers) != 0:
-            userID = int(list(teachers)[-1].userID)+1
+            userID = int(list(teachers)[0].userID)+1
         else:
             userID = 100000
 
@@ -122,7 +123,7 @@ class AddTeacher(APIView):
         # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
         password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
         password = password[0].upper()+password[1:]
-
+        email = email.lower()
         user = User.objects.filter(email=email)
         if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
