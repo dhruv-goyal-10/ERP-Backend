@@ -1,4 +1,4 @@
 .env
-.DS_store
+*.DS_store
 env
 

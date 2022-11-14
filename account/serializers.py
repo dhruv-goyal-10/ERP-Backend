@@ -98,11 +98,7 @@ class AssignClassSerializer(ModelSerializer):
         model = AssignClass
         fields = '__all__'
 
-
-class FeedbackSerizer(serializers.Serializer):
-    userID = serializers.IntegerField()
-    feed = serializers.IntegerField(min_value = 1, max_value = 5)
-    
+   
 class CreateAttendanceSerializer(serializers.Serializer):
     start_date = serializers.DateField()
     end_date = serializers.DateField()
