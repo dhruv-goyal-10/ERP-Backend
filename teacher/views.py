@@ -170,19 +170,17 @@ class StudentFeedbackView(APIView):
     def put(self, request):
         user = return_user(request)
         teacher = get_object_or_404(Teacher, user=user)
-        serializer = FeedbackSerizer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        userID = serializer.data.get('userID')
-        feed = serializer.data.get('feed')
-        student = get_object_or_404(Student, userID=userID)
-        feedback = StudentFeedback.objects.filter(
-            teacher=teacher, student=student)
-        if feedback.exists():
-            feedback = feedback[0]
-            feedback.feed = feed
-            feedback.save()
-            return Response({'msg': 'Feedback Modified Successfully !!'}, status=status.HTTP_200_OK)
-        StudentFeedback(teacher=teacher, student=student, feed=feed).save()
+        feedbacks = request.data
+        for feedback in feedbacks:
+            student = get_object_or_404(Student, userID=feedback["userID"])
+            thisfeedback = StudentFeedback.objects.filter(
+                teacher=teacher, student=student)
+            if thisfeedback.exists():
+                thisfeedback = thisfeedback[0]
+                thisfeedback.feed = feedback["feed"]
+                thisfeedback.save()
+            else:
+                StudentFeedback(teacher=teacher, student=student, feed=feedback["feed"]).save()
         return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
 
 
