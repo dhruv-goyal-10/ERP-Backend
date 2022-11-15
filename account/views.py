@@ -36,11 +36,11 @@ class UserLoginView(APIView):
         if user is not None:
             token = get_tokens_for_user(user)
             if user.is_stu:
-                return Response({'token': token, 'msg': 'Login Success - Student'}, status=status.HTTP_200_OK)
+                return Response({'token': token, 'msg': 'Login Success - Student', "Username": user.name}, status=status.HTTP_200_OK)
             elif user.is_tea:
-                return Response({'token': token, 'msg': 'Login Success - Teacher'}, status=status.HTTP_200_OK)
+                return Response({'token': token, 'msg': 'Login Success - Teacher', "Username": user.name}, status=status.HTTP_200_OK)
             elif user.is_admin:
-                return Response({'token': token, 'msg': 'Login Success - Admin'}, status=status.HTTP_200_OK)
+                return Response({'token': token, 'msg': 'Login Success - Admin', "Username": user.name}, status=status.HTTP_200_OK)
         else:
             return Response({'errors': {'non_field_errors': ['UserID or Password is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
 
