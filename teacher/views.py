@@ -265,14 +265,15 @@ class TakeStudentsAttendance(APIView):
         #         period = data[i]['period']
         #         class_id = data[i]['class_id']
             # else:
-            student = StudentAttendance.objects.get(student__userID=data[i]['userID'],
-                                                    classattendance__assign__class_id=class_id,
-                                                    classattendance__date=date)
-            student.is_present = data[i]['is_present']
-            student.save()
             classatt = ClassAttendance.objects.get(date=date,
                                                     assign__class_id=class_id,
                                                     assign__period=period)
+            student = StudentAttendance.objects.get(student__userID=data[i]['userID'],
+                                                    classattendance = classatt)
+            
+            student.is_present = data[i]['is_present']
+            student.save()
+            
             classatt.status = True
             classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
