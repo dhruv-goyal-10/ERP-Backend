@@ -238,7 +238,7 @@ class ClassAttendanceObjects(APIView):
 
 # 10- API for taking the attendance of the students of particular ClassAttendance Object
 
-class StudentsinClassAttendance(APIView):
+class TakeStudentsAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
@@ -258,26 +258,27 @@ class StudentsinClassAttendance(APIView):
     def put(self, request, date, class_id, period):
         data = request.data
         for i in range(len(data)):
-            if i == 0:
-                date = data[i]['date']
-                period = data[i]['period']
-                class_id = data[i]['class_id']
-            else:
-                student = StudentAttendance.objects.get(student__userID=data[i]['userID'],
-                                                        classattendance__assign__class_id=class_id,
-                                                        classattendance__date=date)
-                student.is_present = data[i]['is_present']
-                student.save()
-                classatt = ClassAttendance.objects.get(date=date,
-                                                       assign__class_id=class_id,
-                                                       assign__period=period)
-                classatt.status = True
-                classatt.save()
+        #     if i == 0:
+        #         date = data[i]['date']
+        #         period = data[i]['period']
+        #         class_id = data[i]['class_id']
+            # else:
+            classatt = ClassAttendance.objects.get(date=date,
+                                                    assign__class_id=class_id,
+                                                    assign__period=period)
+            student = StudentAttendance.objects.get(student__userID=data[i]['userID'],
+                                                    classattendance = classatt)
+            
+            student.is_present = data[i]['is_present']
+            student.save()
+            
+            classatt.status = True
+            classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
 
 # 11- API for creating only today's ClassAttendance Objects for all the classes assigned to the teacher
 
-class CreateTodayAttendance(APIView, PaginationHandlerMixin):
+class CreateTodayAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 

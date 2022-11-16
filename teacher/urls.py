@@ -16,7 +16,7 @@ urlpatterns = [
     path('classofteacher/<str:teacherid>/', ClassOfTeacher.as_view(), name='classofteacherfilter'),
     path('timetable/', TimeTable.as_view(), name='TimeTable'),
     path('ClassAttendanceObjects/', ClassAttendanceObjects.as_view(), name='ClassAttendanceObjects'),
-    path('StudentsinClassAttendance/<str:date>/<str:class_id>/<str:period>/', StudentsinClassAttendance.as_view(), name='StudentsinClassAttendance'),
+    path('TakeStudentsAttendance/<str:date>/<str:class_id>/<str:period>/', TakeStudentsAttendance.as_view(), name='StudentsinClassAttendance'),
 
     path('CreateTodayAttendance/', CreateTodayAttendance.as_view(), name='CreateTodayAttendance')
 ]
