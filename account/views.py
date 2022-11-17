@@ -14,6 +14,8 @@ from . custom_permissions import *
 import re
 from django.shortcuts import get_object_or_404
 from teacher.views import return_user
+import os
+
 
 
 def get_tokens_for_user(user):
@@ -279,5 +281,26 @@ class UpdateSectionView(APIView):
         update = get_object_or_404(Update, id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
+    
 
 
+import pandas as pd
+class Temp(APIView):
+    
+    def post(self, request):
+        serializer = TempSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = request.FILES.get('field_name')
+
+        extension = os.path.splitext(file.name)[1]
+       
+        if extension == '.csv':
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        datas=df.to_dict()
+        print(len(datas))
+        print(datas)
+        print(datas['First Name'])
+        return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)

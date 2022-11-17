@@ -58,6 +58,7 @@ REST_FRAMEWORK = {
     "DATE_INPUT_FORMATS": ["%d-%m-%Y"],
     'DATE_FORMAT': "%d-%m-%Y",
     'DATETIME_FORMAT': "%d-%m-%Y %H:%M:%S",
+    
 }
 
 SIMPLE_JWT = {
