@@ -14,5 +14,4 @@ urlpatterns = [
     path('updatepassword/', UpdatePasswordView.as_view(), name='updatepassword'),
     path('updateemail/', UpdateEmail.as_view(), name='updateemail'),
     path('updatesection/<int:pk>/',UpdateSectionView.as_view(), name='updatesectionthroughparams'),
-    path('temp/',Temp.as_view(), name='updatesectionthroughparams'),
 ]

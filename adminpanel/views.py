@@ -13,6 +13,8 @@ from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
 from account.views import checkemail
 from django.contrib.postgres.search import TrigramWordSimilarity
+import os
+import pandas
 
 
 # 1- API for adding a Student
@@ -21,13 +23,6 @@ class AddStudent(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request):
-        allclasses = list(Class.objects.all())
-        arr=[]
-        for clas in allclasses:
-            arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
-        return Response(arr, status=status.HTTP_200_OK)
-
     def post(self, request):
         serializer = AddStudentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -35,10 +30,12 @@ class AddStudent(APIView):
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
         classid = serializer.data.get('class_id')
-        gender = request.data.get('sex')
+        response = addstudent(email, name, DOB, classid)
 
+
+def addstudent(email, name, DOB, classid):
         if checkemail(email):
-            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+            return 'DNA'#Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
         students = list(Student.objects.all().order_by('-userID'))
         if len(students) != 0:
@@ -52,21 +49,13 @@ class AddStudent(APIView):
         email = email.lower()
         user = User.objects.filter(email=email)
         if user.exists():
-            return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if gender is not None:
-            if gender.lower() == 'm':
-                sex = 'Male'
-            elif gender.lower() == 'f':
-                sex = 'Female'
-            else:
-                return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
+            return 'EAE'#Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             EMAIL.send_credentials_via_email(
                 userID, password, name, email, 'student')
         except:
-            return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+            return 'SEO'#Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(
             email=email,
@@ -83,24 +72,13 @@ class AddStudent(APIView):
             DOB=DOB,
             class_id=classid,
         ).save()
-        curstu = Student.objects.get(userID=userID)
-        if gender is not None:
-            curstu.sex = sex
-            curstu.save()
-        return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
+        return 'SCS'#Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
 
 # 2- API for adding a Teacher
 
 class AddTeacher(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
-
-    def get(self, request):
-        alldepartments = list(Department.objects.all())
-        dict = {}
-        for dep in alldepartments:
-            dict[dep.id] = dep.name
-        return Response(dict, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = AddTeacherSerializer(data=request.data)
@@ -109,7 +87,6 @@ class AddTeacher(APIView):
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
         department = serializer.data.get('department')
-        gender = request.data.get('sex')
 
         if checkemail(email):
             return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
@@ -128,14 +105,6 @@ class AddTeacher(APIView):
         user = User.objects.filter(email=email)
         if user.exists():
             return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if gender is not None:
-            if gender.lower() == 'm':
-                sex = 'Male'
-            elif gender.lower() == 'f':
-                sex = 'Female'
-            else:
-                return Response({'msg': 'Invalid gender input'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             EMAIL.send_credentials_via_email(
@@ -158,10 +127,6 @@ class AddTeacher(APIView):
             DOB=DOB,
             department=department
         ).save()
-        curtea = Teacher.objects.get(userID=userID)
-        if gender is not None:
-            curtea.sex = sex
-            curtea.save()
         return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
 
 # 3- API for performing CRUD operations on Departments 
@@ -628,3 +593,30 @@ class Search(APIView):
         for clas in classes:
             dict["classes"].append(clas.id)
         return Response(dict, status=status.HTTP_200_OK)
+
+
+class AddStudentBulk(APIView):
+
+    def post(self, request):
+        serializer = TempSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = request.FILES.get('field_name')
+        extension = os.path.splitext(file.name)[1]
+        if extension == '.csv':
+            df = pandas.read_csv(file)
+        else:
+            df = pandas.read_excel(file)
+        datas = df.to_csv().strip()
+        datas = datas.split('\n')[1:]
+        serializerobject = []
+        for data in datas:
+            data = data.split(',')[1:]
+            serializerobject += [{ "name" : data[0].strip(),
+                                  "DOB" : data[1].strip(),
+                                  "email" : data[2].strip(),
+                                  "class_id" : data[3].strip() }]
+        serializer = AddStudentSerializer(data = serializerobject, many=True)
+        serializer.is_valid(raise_exception=True)
+        for data in serializer.data:
+            addstudent(data['email'], data['name'], data['DOB'], data['class_id'])
+        return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)

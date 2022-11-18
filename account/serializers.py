@@ -78,13 +78,6 @@ class SubjectSectionSerializer(ModelSerializer):
         fields = '__all__'
 
 
-# class TeacherSectionSerializer(ModelSerializer):
-
-#     class Meta:
-#         model = Teacher
-#         fields = '__all__'
-
-
 class AssignTimeSerializer(ModelSerializer):
 
     class Meta:
