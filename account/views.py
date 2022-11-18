@@ -245,40 +245,37 @@ class UpdateSectionView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin_but_get_allowed_to_all]
 
-    def get(self, request, pk, search='_'):
+    def get(self, request, pk):
         userID = return_user(request).userID
-        userID = 0
         who = userID//100000
         if who == 1:
-            updates = Update.objects.filter(showto=3).values(
-            ) | Update.objects.filter(showto=2).values()
+            updates = Update.objects.filter(showto=3) | Update.objects.filter(showto=2)
         elif who == 2:
-            updates = Update.objects.filter(showto=3).values(
-            ) | Update.objects.filter(showto=1).values()
+            updates = Update.objects.filter(showto=3) | Update.objects.filter(showto=1)
         else:
             updates = Update.objects.all()
-        if search == '_':
-            serializer = UpdateSectionSerializer(updates, many=True)
-            SerializerData = [serializer.data]
-        else:
+        SerializerData = []
+        search = request.GET.get('search') or ''
+        if search :
             query = SearchQuery(search)
-            filtered = Update.objects.filter(title__search = query) | Update.objects.filter(description__search = query)
+            filtered = updates.filter(title__search = query) | updates.filter(description__search = query) 
             serializer = filtered.annotate(titleheadline=SearchHeadline('title', query, start_sel='<span>', stop_sel='</span>', highlight_all=True),
-                                                 descriptionheadline=SearchHeadline('description', search, start_sel='<span>', stop_sel='</span>', highlight_all=True))
-            SerializerData = []
+                                                 descriptionheadline=SearchHeadline('description', query, start_sel='<span>', stop_sel='</span>', highlight_all=True))
             for ser in serializer:
-                SerializerData += [[ser.titleheadline,
-                                    ser.descriptionheadline]]
+                SerializerData += [[ser.titleheadline, ser.descriptionheadline]]
+        else:
+            serializer = UpdateSectionSerializer(updates, many = True)
+            SerializerData = [serializer.data]
         return Response(SerializerData)
 
-    def post(self, request, pk, search=None):
+    def post(self, request, pk):
         serializer = UpdateSectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             serializer.save()
         return Response({'msg': 'UPDATE ADDED'},  status=status.HTTP_200_OK)
 
-    def put(self, request, pk, search=None):
+    def put(self, request, pk):
         pk = request.data.get("id")
         update = Update.objects.get(id=pk)
         serializer = UpdateSectionSerializer(
@@ -287,7 +284,7 @@ class UpdateSectionView(APIView):
         serializer.save()
         return Response({'msg': 'UPDATE is modified'},  status=status.HTTP_200_OK)
 
-    def delete(self, request, pk, search=None):
+    def delete(self, request, pk):
         update = get_object_or_404(Update, id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
