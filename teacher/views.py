@@ -15,6 +15,7 @@ from rest_framework.pagination import PageNumberPagination
 
 # This function fetches the user from its Access Token
 
+
 def return_user(request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
     tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
@@ -50,6 +51,7 @@ class TProfileDetails(APIView):
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 # 2- API for getting the list of students in a particular class
+
 
 class StudentInClass(APIView):
     authentication_classes = [JWTAuthentication]
@@ -134,6 +136,7 @@ class ClassOfTeacher(APIView):
 
 # 5- API for getting the list of subjects in a particular department
 
+
 class SubjectsInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -146,6 +149,7 @@ class SubjectsInDepartments(APIView):
 
 # 6- API for getting the list of teachers in a particular department
 
+
 class TeachersInDepartments(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
@@ -154,15 +158,17 @@ class TeachersInDepartments(APIView):
         dept = get_object_or_404(Department, id=departmentid)
         teachers = Teacher.objects.filter(department__id=departmentid)
         departmentdet = dict()
-        departmentdet["department details"] = {dept.id : dept.name}
+        departmentdet["department details"] = {dept.id: dept.name}
         response = {}
         if teachers.exists():
             for teacher in teachers:
-                response[teacher.userID]=teacher.name
-        response = {'teachers' : response}
+                response[teacher.userID] = teacher.name
+        response = {'teachers': response}
         return Response(departmentdet | response, status=status.HTTP_200_OK)
 
 # 7- API for giving feedback to a particular student
+
+
 class StudentFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -180,14 +186,17 @@ class StudentFeedbackView(APIView):
                 thisfeedback.feed = feedback["feed"]
                 thisfeedback.save()
             else:
-                StudentFeedback(teacher=teacher, student=student, feed=feedback["feed"]).save()
+                StudentFeedback(teacher=teacher, student=student,
+                                feed=feedback["feed"]).save()
         return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
 
 
-TIME_SLOTS = ['8:30 - 9:20','9:20 - 10:10', '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
+TIME_SLOTS = ['8:30 - 9:20', '9:20 - 10:10',
+              '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 # 8- API for viewing TimeTable (Teacher side)
+
 
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
@@ -214,15 +223,17 @@ class TimeTable(APIView):
         return Response(list,  status=status.HTTP_200_OK)
 
 # 9- API for getting the list of all the schedules of assigned classes with their attendance status
+
+
 class ClassAttendanceObjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
     def get(self, request):
         userID = return_user(request).userID
-        allobjects= ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID= userID
-        )
-        
+        allobjects = ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID=userID
+                                                                      )
+
         list = []
         for object in allobjects:
             dict = {"date": object.date,
@@ -238,6 +249,7 @@ class ClassAttendanceObjects(APIView):
 
 # 10- API for taking the attendance of the students of particular ClassAttendance Object
 
+
 class TakeStudentsAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
@@ -247,7 +259,7 @@ class TakeStudentsAttendance(APIView):
             ClassAttendance, assign__period=period, date=date, assign__class_id=class_id)
         students = StudentAttendance.objects.filter(
             classattendance=classattendance)
-        list = [{"marked" : classattendance.status}]
+        list = [{"marked": classattendance.status}]
         for student in students:
             dict = {"name": student.student.name,
                     "userID": student.student.userID,
@@ -258,25 +270,21 @@ class TakeStudentsAttendance(APIView):
     def put(self, request, date, class_id, period):
         data = request.data
         for i in range(len(data)):
-        #     if i == 0:
-        #         date = data[i]['date']
-        #         period = data[i]['period']
-        #         class_id = data[i]['class_id']
-            # else:
             classatt = ClassAttendance.objects.get(date=date,
-                                                    assign__class_id=class_id,
-                                                    assign__period=period)
+                                                   assign__class_id=class_id,
+                                                   assign__period=period)
             student = StudentAttendance.objects.get(student__userID=data[i]['userID'],
-                                                    classattendance = classatt)
-            
+                                                    classattendance=classatt)
+
             student.is_present = data[i]['is_present']
             student.save()
-            
+
             classatt.status = True
             classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
 
 # 11- API for creating only today's ClassAttendance Objects for all the classes assigned to the teacher
+
 
 class CreateTodayAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -290,11 +298,11 @@ class CreateTodayAttendance(APIView):
         days = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
                 4: 'Thursday', 5: 'Friday', 6: 'Saturday', 0: 'Sunday'}
         curday = days[int(curdate.strftime('%w'))]
-        assignedclasses = AssignClass.objects.filter(teacher = teacher)
+        assignedclasses = AssignClass.objects.filter(teacher=teacher)
         for assignedclass in assignedclasses:
             curclass = assignedclass.class_id
             assignedtimes = AssignTime.objects.filter(
-                day=curday, class_id=curclass, teacher = teacher)
+                day=curday, class_id=curclass, teacher=teacher)
             for assignedtime in assignedtimes:
                 try:
                     ca = ClassAttendance.objects.create(
@@ -307,13 +315,13 @@ class CreateTodayAttendance(APIView):
                     continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
-    
+
 # ClassAttendanceObjects API (with Pagination)
-    
+
 # class Basic_pagination(PageNumberPagination):
 #     page_size= 5
-#     # page_size_query_param = 'limit'  
-    
+#     # page_size_query_param = 'limit'
+
 # class ClassAttendanceObjects(APIView, PaginationHandlerMixin):
 #     authentication_classes = [JWTAuthentication]
 #     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
@@ -323,7 +331,7 @@ class CreateTodayAttendance(APIView):
 #         userID = return_user(request).userID
 #         allobjects= ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID= userID
 #         )
-        
+
 #         list = []
 #         for object in allobjects:
 #             dict = {"date": object.date,

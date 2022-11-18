@@ -42,51 +42,56 @@ class AddStudent(APIView):
 
 
 def addstudent(email, name, DOB, classid):
-        if checkemail(email):
-            return 'DNA'#Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+    if checkemail(email):
+        # Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+        return 'DNA'
 
-        students = list(Student.objects.all().order_by('-userID'))
-        if len(students) != 0:
-            userID = int(students[0].userID)+1
-        else:
-            userID = 200000
-        classid = get_object_or_404(Class, id=classid)
-        # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
-        password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
-        password = password[0].upper()+password[1:]
-        email = email.lower()
-        user = User.objects.filter(email=email)
-        if user.exists():
-            return 'EAE'#Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    students = list(Student.objects.all().order_by('-userID'))
+    if len(students) != 0:
+        userID = int(students[0].userID)+1
+    else:
+        userID = 200000
+    classid = get_object_or_404(Class, id=classid)
+    # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
+    password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
+    password = password[0].upper()+password[1:]
+    email = email.lower()
+    user = User.objects.filter(email=email)
+    if user.exists():
+        # Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        return 'EAE'
 
-        try:
-            EMAIL.send_credentials_via_email(
-                userID, password, name, email, 'student')
-        except:
-            return 'SEO'#Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        EMAIL.send_credentials_via_email(
+            userID, password, name, email, 'student')
+    except:
+        # Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        return 'SEO'
 
-        user = User.objects.create_user(
-            email=email,
-            userID=userID,
-            name=name,
-        )
-        user.set_password(password)
-        user.is_stu = True
-        user.save()
-        Student(
-            user=user,
-            userID=userID,
-            name=name,
-            DOB=DOB,
-            class_id=classid,
-        ).save()
-        return 'SCS'#Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
+    user = User.objects.create_user(
+        email=email,
+        userID=userID,
+        name=name,
+    )
+    user.set_password(password)
+    user.is_stu = True
+    user.save()
+    Student(
+        user=user,
+        userID=userID,
+        name=name,
+        DOB=DOB,
+        class_id=classid,
+    ).save()
+    # Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
+    return 'SCS'
 
 # 2- API for adding a Teacher
 
+
 class AddTeacher(APIView):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated, IsAdmin]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def post(self, request):
         serializer = AddTeacherSerializer(data=request.data)
@@ -107,48 +112,53 @@ class AddTeacher(APIView):
 
 
 def addteacher(email, name, DOB, department):
-        if checkemail(email):
-            return 'DNA'#Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+    if checkemail(email):
+        # Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+        return 'DNA'
 
-        teachers = Teacher.objects.all().order_by('-userID')
-        if len(teachers) != 0:
-            userID = int(list(teachers)[0].userID)+1
-        else:
-            userID = 100000
+    teachers = Teacher.objects.all().order_by('-userID')
+    if len(teachers) != 0:
+        userID = int(list(teachers)[0].userID)+1
+    else:
+        userID = 100000
 
-        department = get_object_or_404(Department, id=department)
-        # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
-        password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
-        password = password[0].upper()+password[1:]
-        email = email.lower()
-        user = User.objects.filter(email=email)
-        if user.exists():
-            return 'EAE'#Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    department = get_object_or_404(Department, id=department)
+    # Default Password --> first_name in lowercase + @ + DOB(YYYYMMDD)
+    password = name.split(" ")[0].lower() + '@' + DOB.replace("-", "")
+    password = password[0].upper()+password[1:]
+    email = email.lower()
+    user = User.objects.filter(email=email)
+    if user.exists():
+        # Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        return 'EAE'
 
-        try:
-            EMAIL.send_credentials_via_email(
-                userID, password, name, email, 'teacher')
-        except:
-            return 'SEO'#Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
-        user = User.objects.create_user(
-            email=email,
-            userID=userID,
-            name=name,
-        )
-        user.set_password(password)
-        user.is_tea = True
-        user.save()
+    try:
+        EMAIL.send_credentials_via_email(
+            userID, password, name, email, 'teacher')
+    except:
+        # Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        return 'SEO'
+    user = User.objects.create_user(
+        email=email,
+        userID=userID,
+        name=name,
+    )
+    user.set_password(password)
+    user.is_tea = True
+    user.save()
 
-        Teacher(
-            user=user,
-            userID=userID,
-            name=name,
-            DOB=DOB,
-            department=department
-        ).save()
-        return 'TCS'#Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+    Teacher(
+        user=user,
+        userID=userID,
+        name=name,
+        DOB=DOB,
+        department=department
+    ).save()
+    # Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+    return 'TCS'
 
-# 3- API for performing CRUD operations on Departments 
+# 3- API for performing CRUD operations on Departments
+
 
 class Departments(APIView):
     authentication_classes = [JWTAuthentication]
@@ -185,16 +195,19 @@ class Departments(APIView):
 
 # 4- API for performing CRUD operations on Classes
 
+
 class ClassObject(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request, pk):
         if pk == 'ALL':
-            allclasses = list(Class.objects.order_by('year', 'department', 'section'))
-            arr=[]
+            allclasses = list(Class.objects.order_by(
+                'year', 'department', 'section'))
+            arr = []
             for clas in allclasses:
-                arr += [[clas.year, clas.department.name, clas.department.id, clas.section, clas.id]]
+                arr += [[clas.year, clas.department.name,
+                         clas.department.id, clas.section, clas.id]]
             return Response(arr, status=status.HTTP_200_OK)
         else:
             classes = get_object_or_404(Class, id=pk)
@@ -220,6 +233,8 @@ class ClassObject(APIView):
         return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
 
 # 5- API for getting classes by their departments
+
+
 class ClassByDepartment(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -227,12 +242,13 @@ class ClassByDepartment(APIView):
     def get(self, request, departmentid):
         department = get_object_or_404(Department, id=departmentid)
         allclasses = Class.objects.all().filter(department=department)
-        arr=[]
+        arr = []
         for clas in allclasses:
             arr += [[clas.id, clas.year, clas.section]]
         return Response(arr,  status=status.HTTP_200_OK)
 
 # 6- API for performing CRUD operations on Subjects
+
 
 class Subjects(APIView):
     authentication_classes = [JWTAuthentication]
@@ -266,6 +282,8 @@ class Subjects(APIView):
         return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
 
 # 7- API for viewing Feedbacks
+
+
 class FeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -319,7 +337,9 @@ class FeedbackView(APIView):
             resdict["averagefeed"] = avgfeed
         return Response(resdict,  status=status.HTTP_200_OK)
 
-# 8- API for creating attendance slots in a date range 
+# 8- API for creating attendance slots in a date range
+
+
 class CreateAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -327,11 +347,11 @@ class CreateAttendance(APIView):
     def post(self, request):
         serializer = CreateAttendanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         start_date = serializer.data.get("start_date")
         end_date = serializer.data.get("end_date")
         class_id = serializer.data.get("class_id")
-        
+
         sdate = date(int(start_date[:4]), int(
             start_date[5:7]), int(start_date[8:]))
         edate = date(int(end_date[:4]), int(end_date[5:7]), int(end_date[8:]))
@@ -361,18 +381,20 @@ class CreateAttendance(APIView):
                     continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
-    
+
 # 9- API for performing CRUD operations of assigning (teacher and subject) to a class
+
+
 class Assigns(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request,class_id,subject_code, teacher_userID):
+    def get(self, request, class_id, subject_code, teacher_userID):
         class_assigns = AssignClass.objects.filter(class_id=class_id)
         dict = {}
-        list=[]
+        list = []
         for assign in class_assigns:
-            dict={
+            dict = {
                 "class_id": class_id,
                 "subject_code": assign.subject.code,
                 "subject_name": assign.subject.name,
@@ -381,151 +403,150 @@ class Assigns(APIView):
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
-    
+
     def post(self, request, class_id, subject_code, teacher_userID):
-        if(AssignClass.objects.filter(class_id__id=class_id, 
-                                      subject__code= subject_code)).exists():
-            
-            return Response({'msg': 'This subject is already assigned to this class'}, 
+        if (AssignClass.objects.filter(class_id__id=class_id,
+                                       subject__code=subject_code)).exists():
+
+            return Response({'msg': 'This subject is already assigned to this class'},
                             status=status.HTTP_400_BAD_REQUEST)
-            
-        class_id= get_object_or_404(Class, id=class_id)
-        subject= get_object_or_404(Subject, code=subject_code)
-        teacher= get_object_or_404(Teacher, userID= teacher_userID)
-        
+
+        class_id = get_object_or_404(Class, id=class_id)
+        subject = get_object_or_404(Subject, code=subject_code)
+        teacher = get_object_or_404(Teacher, userID=teacher_userID)
+
         AssignClass.objects.create(class_id=class_id,
-                    subject=subject,
-                    teacher=teacher)
+                                   subject=subject,
+                                   teacher=teacher)
         return Response({"msg": "Class has been assigned successfully."}, status=status.HTTP_200_OK)
-    
+
     def put(self, request, class_id, subject_code, teacher_userID):
-        
+
         serializer = AssignsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         id = serializer.data.get("class_id")
-        if(id!= class_id): 
+        if (id != class_id):
             return Response({'msg': 'You cannot modify Class ID'},  status=status.HTTP_400_BAD_REQUEST)
-        
-        new_subject_code= serializer.data.get("subject_code")
+
+        new_subject_code = serializer.data.get("subject_code")
         new_teacher_userID = serializer.data.get("teacher_userID")
-        
-        
-        new_subject= get_object_or_404(Subject, code=new_subject_code)
-        new_teacher= get_object_or_404(Teacher, userID=new_teacher_userID)
-        
-        assign = AssignClass.objects.filter(class_id__id=class_id, 
-                                   subject__code= subject_code,
-                                   teacher__userID= teacher_userID)
+
+        new_subject = get_object_or_404(Subject, code=new_subject_code)
+        new_teacher = get_object_or_404(Teacher, userID=new_teacher_userID)
+
+        assign = AssignClass.objects.filter(class_id__id=class_id,
+                                            subject__code=subject_code,
+                                            teacher__userID=teacher_userID)
         if not assign.exists():
             return Response({"msg": "No Assigns found"}, status=status.HTTP_200_OK)
-        
-        assign.update(subject= new_subject,
-                      teacher= new_teacher)
-        
+
+        assign.update(subject=new_subject,
+                      teacher=new_teacher)
+
         return Response({"msg": "Assigns has been updated successfully."}, status=status.HTTP_200_OK)
-    
-    
+
     def delete(self, request, class_id, subject_code, teacher_userID):
-        
+
         assignedclass = get_object_or_404(AssignClass, class_id__id=class_id,
-                    subject__code= subject_code,
-                    teacher__userID= teacher_userID)
-        
+                                          subject__code=subject_code,
+                                          teacher__userID=teacher_userID)
+
         assignedclass.delete()
-        
+
         return Response({"msg": "Assign has been deleted successfully"}, status=status.HTTP_200_OK)
 
 # 10- API for performing CRUD operations of assigning day and period to a Assigned Class
+
 
 class AssignTimeSlots(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request,class_id,subject_code, teacher_userID):
-        
-        assigned_class = get_object_or_404(AssignClass, class_id = class_id,
-                                                subject__code= subject_code,
-                                                teacher__userID= teacher_userID)
-        assigned_times = AssignTime.objects.filter(assign= assigned_class)
-        list=[]
+    def get(self, request, class_id, subject_code, teacher_userID):
+
+        assigned_class = get_object_or_404(AssignClass, class_id=class_id,
+                                           subject__code=subject_code,
+                                           teacher__userID=teacher_userID)
+        assigned_times = AssignTime.objects.filter(assign=assigned_class)
+        list = []
         for time_slot in assigned_times:
-            dict={
+            dict = {
                 "id": time_slot.id,
                 "day": time_slot.day,
                 "period": time_slot.period
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
-    
+
     def post(self, request, class_id, subject_code, teacher_userID):
-        assigned_class = get_object_or_404(AssignClass, class_id = class_id,
-                                                subject__code= subject_code,
-                                                teacher__userID= teacher_userID)
+        assigned_class = get_object_or_404(AssignClass, class_id=class_id,
+                                           subject__code=subject_code,
+                                           teacher__userID=teacher_userID)
         serializer = TimeSlotSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        day= serializer.data.get("day")
+        day = serializer.data.get("day")
         period = serializer.data.get("period")
-        if AssignTime.objects.filter(assign__class_id= class_id,
+        if AssignTime.objects.filter(assign__class_id=class_id,
                                      day=day,
-                                     period= period).exists():
+                                     period=period).exists():
             return Response({'msg': 'Time slot is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
-        klass = get_object_or_404(Class, id= class_id)
-        teacher = get_object_or_404(Teacher, userID= teacher_userID)
+        klass = get_object_or_404(Class, id=class_id)
+        teacher = get_object_or_404(Teacher, userID=teacher_userID)
         AssignTime.objects.create(
-            assign= assigned_class,
+            assign=assigned_class,
             day=day,
             period=period,
             class_id=klass,
-            teacher= teacher
+            teacher=teacher
         )
         return Response({"msg": "Time Slot has been Saved successfully"}, status=status.HTTP_200_OK)
-    
-    def put(self, request, class_id,subject_code, teacher_userID):
-        time_slot_id= class_id
+
+    def put(self, request, class_id, subject_code, teacher_userID):
+        time_slot_id = class_id
         time_slot = get_object_or_404(AssignTime, id=time_slot_id)
-        assigned_class= time_slot.assign
+        assigned_class = time_slot.assign
         serializer = TimeSlotSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        new_day= serializer.data.get("day")
+        new_day = serializer.data.get("day")
         new_period = serializer.data.get("period")
-        if AssignTime.objects.filter(assign= assigned_class,
+        if AssignTime.objects.filter(assign=assigned_class,
                                      day=new_day,
-                                     period= new_period).exists():
+                                     period=new_period).exists():
             return Response({'msg': 'Time slot on this day is already occupied'},  status=status.HTTP_400_BAD_REQUEST)
-        
-        time_slot.day=new_day
-        time_slot.period= new_period
+
+        time_slot.day = new_day
+        time_slot.period = new_period
         time_slot.save()
-       
+
         return Response({"msg": "Time Slot has been Updated successfully"}, status=status.HTTP_200_OK)
-    
-    
-    def delete(self, request, class_id,subject_code, teacher_userID):
-        time_slot_id= class_id
+
+    def delete(self, request, class_id, subject_code, teacher_userID):
+        time_slot_id = class_id
         time_slot = get_object_or_404(AssignTime, id=time_slot_id)
         time_slot.delete()
-       
+
         return Response({"msg": "Time Slot has been deleted successfully"}, status=status.HTTP_200_OK)
 
 # 11- API for viewing the list of Students and their Attendance Percentage
+
 
 class StudentAttendanceList(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
 
     def get(self, request, classid):
-        students = Student.objects.filter(class_id = classid)
+        students = Student.objects.filter(class_id=classid)
         list = []
         for student in students:
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
-                                                                classattendance__status=True,
-                                                                student__userID=student.userID).count()
-            
+                                                             classattendance__status=True,
+                                                             student__userID=student.userID).count()
+
             attended_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=classid,
                                                                 classattendance__status=True,
                                                                 student__userID=student.userID,
                                                                 is_present=True).count()
-            
+
             if total_classes == 0:
                 attendance_percent = 0
             else:
@@ -539,27 +560,28 @@ class StudentAttendanceList(APIView):
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
-        
+
 # 12- API for viewing the Attendance of all the subjects of a student
+
 
 class StudentSubjectAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request, studentid):
-        student = get_object_or_404(Student, userID = studentid)
+        student = get_object_or_404(Student, userID=studentid)
         class_id = student.class_id
         subjects = AssignClass.objects.filter(class_id=class_id)
         list = []
         for subject in subjects:
             subject_name = subject.subject.name
             subject_code = subject.subject.code
-            
+
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
-                                                                subject__code=subject_code,
-                                                                classattendance__status=True,
-                                                                student__userID=student.userID).count()
-            
+                                                             subject__code=subject_code,
+                                                             classattendance__status=True,
+                                                             student__userID=student.userID).count()
+
             attended_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
                                                                 subject__code=subject_code,
                                                                 classattendance__status=True,
@@ -587,9 +609,9 @@ class DeleteUser(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def delete(self, request, userID):
-        user = get_object_or_404(User, userID = userID)
+        user = get_object_or_404(User, userID=userID)
         user.delete()
-        return Response({"msg":"user deleted !!"}, status=status.HTTP_200_OK)
+        return Response({"msg": "user deleted !!"}, status=status.HTTP_200_OK)
 
 
 class Search(APIView):
@@ -598,11 +620,16 @@ class Search(APIView):
 
     def get(self, request):
         search = request.GET.get('search')
-        students = Student.objects.annotate(similarity=TrigramWordSimilarity(search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
-        teachers = Teacher.objects.annotate(similarity=TrigramWordSimilarity(search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
-        departments = Department.objects.annotate(similarity=TrigramWordSimilarity(search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
-        classes = Class.objects.annotate(similarity=TrigramWordSimilarity(search, 'id'),).filter(similarity__gt=0.3).order_by('-similarity')
-        dict = {"students":[], "teachers":[], "departments":[], "classes":[]}
+        students = Student.objects.annotate(similarity=TrigramWordSimilarity(
+            search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
+        teachers = Teacher.objects.annotate(similarity=TrigramWordSimilarity(
+            search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
+        departments = Department.objects.annotate(similarity=TrigramWordSimilarity(
+            search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
+        classes = Class.objects.annotate(similarity=TrigramWordSimilarity(
+            search, 'id'),).filter(similarity__gt=0.3).order_by('-similarity')
+        dict = {"students": [], "teachers": [],
+                "departments": [], "classes": []}
         for student in students:
             dict["students"].append(student.name)
         for teacher in teachers:
@@ -615,6 +642,8 @@ class Search(APIView):
 
 
 class AddUserBulk(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def post(self, request, user):
         serializer = TempSerializer(data=request.data)
@@ -634,31 +663,35 @@ class AddUserBulk(APIView):
             dependancy = 'department'
         for data in datas:
             data = data.split(',')[1:]
-            serializerobject += [{ "name" : data[0].strip(),
-                                  "DOB" : data[1].strip(),
-                                  "email" : data[2].strip(),
-                                  dependancy : data[3].strip() }]
+            serializerobject += [{"name": data[0].strip(),
+                                  "DOB": data[1].strip(),
+                                  "email": data[2].strip(),
+                                  dependancy: data[3].strip()}]
         if user == 'students':
-            serializer = AddStudentSerializer(data = serializerobject, many=True)
+            serializer = AddStudentSerializer(data=serializerobject, many=True)
         else:
-            serializer = AddTeacherSerializer(data = serializerobject, many=True)
+            serializer = AddTeacherSerializer(data=serializerobject, many=True)
         serializer.is_valid(raise_exception=True)
         addstatus = {}
-        i=1
+        i = 1
         for data in serializer.data:
             if user == 'students':
-                response = addstudent(data['email'], data['name'], data['DOB'], data[dependancy])
+                response = addstudent(
+                    data['email'], data['name'], data['DOB'], data[dependancy])
             else:
-                response = addteacher(data['email'], data['name'], data['DOB'], data[dependancy])
+                response = addteacher(
+                    data['email'], data['name'], data['DOB'], data[dependancy])
             if response == 'DNA':
-                addstatus["entry "+str(i)]='Domain not allowed'
+                addstatus["entry "+str(i)] = 'Domain not allowed'
             elif response == 'EAE':
-                addstatus["entry "+str(i)]='User with this email already exists'
+                addstatus["entry " +
+                          str(i)] = 'User with this email already exists'
             elif response == 'SEO':
-                addstatus["entry "+str(i)]='Some error occured! Please try again'
+                addstatus["entry " +
+                          str(i)] = 'Some error occured! Please try again'
             elif response == 'SCS':
-                addstatus["entry "+str(i)]='Student Created Successfully'
+                addstatus["entry "+str(i)] = 'Student Created Successfully'
             elif response == 'TCS':
-                addstatus["entry "+str(i)]='Teacher Created Successfully'
-            i+=1
+                addstatus["entry "+str(i)] = 'Teacher Created Successfully'
+            i += 1
         return Response(addstatus,  status=status.HTTP_200_OK)

@@ -292,4 +292,3 @@ class UpdateSectionView(APIView):
         update = get_object_or_404(Update, id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
-

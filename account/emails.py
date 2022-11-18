@@ -25,7 +25,7 @@ class EMAIL:
         )
         email.attach_alternative(html_content, "text/html")
         email.send()
-        otprelation = OTP.objects.get(user = user)
+        otprelation = OTP.objects.get(user=user)
         otprelation.otp = otp
         otprelation.otp_created_at = timezone.now()
         otprelation.isexpired = False
@@ -46,7 +46,7 @@ class EMAIL:
 
     def send_otp_for_email_verification(user, mailaddress):
         otp = random.randint(1000, 9999)
-        otprelation = OTP.objects.get(user = user)
+        otprelation = OTP.objects.get(user=user)
         otprelation.otp = otp
         otprelation.otp_created_at = timezone.now()
         otprelation.isexpired = False

@@ -59,7 +59,7 @@ REST_FRAMEWORK = {
     # "DATE_INPUT_FORMATS": ["%d-%m-%Y"],
     # 'DATE_FORMAT': "%d-%m-%Y",
     # 'DATETIME_FORMAT': "%d-%m-%Y %H:%M:%S",
-    
+
 }
 
 SIMPLE_JWT = {
@@ -130,7 +130,7 @@ WSGI_APPLICATION = 'ERP_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-ON_HEROKU= config('ON_HEROKU')
+ON_HEROKU = config('ON_HEROKU')
 
 if ON_HEROKU == '1':
     DATABASES = {
@@ -143,7 +143,7 @@ if ON_HEROKU == '1':
             'PORT': config('DATABASE_PORT'),
         }
     }
-    
+
 else:
     DATABASES = {
         'default': {
@@ -199,7 +199,7 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS=True
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 

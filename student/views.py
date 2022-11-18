@@ -11,6 +11,7 @@ from datetime import date
 
 # 1- API for viewing the own profile (student profile)
 
+
 class SProfileDetails(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -36,6 +37,7 @@ class SProfileDetails(APIView):
 
 # 2- API for giving feedback to the teacher
 
+
 class TeacherFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -53,7 +55,8 @@ class TeacherFeedbackView(APIView):
                 thisfeedback.feed = feedback["feed"]
                 thisfeedback.save()
             else:
-                TeacherFeedback(teacher=teacher, student=student, feed=feedback["feed"]).save()
+                TeacherFeedback(teacher=teacher, student=student,
+                                feed=feedback["feed"]).save()
         return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
 
 
@@ -91,6 +94,7 @@ class TimeTable(APIView):
 
 # 4- API for getting Overall attendance of student
 
+
 class StudentOverallAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -104,18 +108,18 @@ class StudentOverallAttendance(APIView):
         for subject in subjects:
             subject_name = subject.subject.name
             subject_code = subject.subject.code
-            
+
             total_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
-                                                                subject__code=subject_code,
-                                                                classattendance__status=True,
-                                                                student__userID=student.userID).count()
-            
+                                                             subject__code=subject_code,
+                                                             classattendance__status=True,
+                                                             student__userID=student.userID).count()
+
             attended_classes = StudentAttendance.objects.filter(classattendance__assign__class_id=class_id,
                                                                 subject__code=subject_code,
                                                                 classattendance__status=True,
                                                                 student__userID=student.userID,
                                                                 is_present=True).count()
-            
+
             if total_classes == 0:
                 attendance_percent = 0
             else:
@@ -134,6 +138,7 @@ class StudentOverallAttendance(APIView):
 
 # 5- API for fetching attendance of a particular subject of a student
 
+
 class StudentSubjectAttendance(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -145,7 +150,7 @@ class StudentSubjectAttendance(APIView):
                                                        student=student,
                                                        classattendance__date__month=month,
                                                        classattendance__date__year=date.today().year,
-                                                       classattendance__status = True)
+                                                       classattendance__status=True)
         list = []
         for attendance in attendances:
             dict = {}
@@ -157,6 +162,3 @@ class StudentSubjectAttendance(APIView):
             }
             list.append(dict)
         return Response(list, status=status.HTTP_200_OK)
-    
-    
-

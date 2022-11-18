@@ -91,29 +91,30 @@ class AssignClassSerializer(ModelSerializer):
         model = AssignClass
         fields = '__all__'
 
-   
+
 class CreateAttendanceSerializer(serializers.Serializer):
     start_date = serializers.DateField()
     end_date = serializers.DateField()
-    class_id = serializers.CharField(max_length = 10)
-    
-    
+    class_id = serializers.CharField(max_length=10)
+
+
 class StudentAttendanceSerializer(ModelSerializer):
     class Meta:
         model = StudentAttendance
         fields = '__all__'
-        
-    
+
+
 class AssignsSerializer(serializers.Serializer):
-    class_id = serializers.CharField(max_length = 10)
+    class_id = serializers.CharField(max_length=10)
     subject_code = serializers.CharField()
     teacher_userID = serializers.IntegerField()
-    
+
+
 class TimeSlotSerializer(serializers.Serializer):
-    period = serializers.ChoiceField(choices = TIME_SLOTS)
-    day = serializers.ChoiceField(choices = DAYS)
-    
-    
+    period = serializers.ChoiceField(choices=TIME_SLOTS)
+    day = serializers.ChoiceField(choices=DAYS)
+
+
 def validate_file_extension(value):
     import os
     from django.core.exceptions import ValidationError
@@ -121,6 +122,7 @@ def validate_file_extension(value):
     valid_extensions = ['.xlsx', '.xls', '.csv']
     if not ext.lower() in valid_extensions:
         raise ValidationError('Unsupported file extension.')
-    
+
+
 class TempSerializer(serializers.Serializer):
-    field_name = serializers.FileField(validators=[validate_file_extension]) 
+    field_name = serializers.FileField(validators=[validate_file_extension])
