@@ -31,6 +31,14 @@ class AddStudent(APIView):
         DOB = serializer.data.get('DOB')
         classid = serializer.data.get('class_id')
         response = addstudent(email, name, DOB, classid)
+        if response == 'DNA':
+            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+        elif response == 'EAE':
+            return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        elif response == 'SEO':
+            return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        elif response == 'SCS':
+            return Response({'msg': 'Student Created Successfully'}, status=status.HTTP_200_OK)
 
 
 def addstudent(email, name, DOB, classid):
@@ -77,8 +85,8 @@ def addstudent(email, name, DOB, classid):
 # 2- API for adding a Teacher
 
 class AddTeacher(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsAdmin]
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated, IsAdmin]
 
     def post(self, request):
         serializer = AddTeacherSerializer(data=request.data)
@@ -87,9 +95,20 @@ class AddTeacher(APIView):
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
         department = serializer.data.get('department')
-
-        if checkemail(email):
+        response = addteacher(email, name, DOB, department)
+        if response == 'DNA':
             return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+        elif response == 'EAE':
+            return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        elif response == 'SEO':
+            return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        elif response == 'TCS':
+            return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+
+
+def addteacher(email, name, DOB, department):
+        if checkemail(email):
+            return 'DNA'#Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
         teachers = Teacher.objects.all().order_by('-userID')
         if len(teachers) != 0:
@@ -104,13 +123,13 @@ class AddTeacher(APIView):
         email = email.lower()
         user = User.objects.filter(email=email)
         if user.exists():
-            return Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            return 'EAE'#Response({'msg': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             EMAIL.send_credentials_via_email(
                 userID, password, name, email, 'teacher')
         except:
-            return Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
+            return 'SEO'#Response({'msg': 'Some error occured! Please try again'}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.create_user(
             email=email,
             userID=userID,
@@ -127,7 +146,7 @@ class AddTeacher(APIView):
             DOB=DOB,
             department=department
         ).save()
-        return Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
+        return 'TCS'#Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
 
 # 3- API for performing CRUD operations on Departments 
 
@@ -595,9 +614,9 @@ class Search(APIView):
         return Response(dict, status=status.HTTP_200_OK)
 
 
-class AddStudentBulk(APIView):
+class AddUserBulk(APIView):
 
-    def post(self, request):
+    def post(self, request, user):
         serializer = TempSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         file = request.FILES.get('field_name')
@@ -609,14 +628,37 @@ class AddStudentBulk(APIView):
         datas = df.to_csv().strip()
         datas = datas.split('\n')[1:]
         serializerobject = []
+        if user == 'students':
+            dependancy = 'class_id'
+        else:
+            dependancy = 'department'
         for data in datas:
             data = data.split(',')[1:]
             serializerobject += [{ "name" : data[0].strip(),
                                   "DOB" : data[1].strip(),
                                   "email" : data[2].strip(),
-                                  "class_id" : data[3].strip() }]
-        serializer = AddStudentSerializer(data = serializerobject, many=True)
+                                  dependancy : data[3].strip() }]
+        if user == 'students':
+            serializer = AddStudentSerializer(data = serializerobject, many=True)
+        else:
+            serializer = AddTeacherSerializer(data = serializerobject, many=True)
         serializer.is_valid(raise_exception=True)
+        addstatus = {}
+        i=1
         for data in serializer.data:
-            addstudent(data['email'], data['name'], data['DOB'], data['class_id'])
-        return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
+            if user == 'students':
+                response = addstudent(data['email'], data['name'], data['DOB'], data[dependancy])
+            else:
+                response = addteacher(data['email'], data['name'], data['DOB'], data[dependancy])
+            if response == 'DNA':
+                addstatus["entry "+str(i)]='Domain not allowed'
+            elif response == 'EAE':
+                addstatus["entry "+str(i)]='User with this email already exists'
+            elif response == 'SEO':
+                addstatus["entry "+str(i)]='Some error occured! Please try again'
+            elif response == 'SCS':
+                addstatus["entry "+str(i)]='Student Created Successfully'
+            elif response == 'TCS':
+                addstatus["entry "+str(i)]='Teacher Created Successfully'
+            i+=1
+        return Response(addstatus,  status=status.HTTP_200_OK)

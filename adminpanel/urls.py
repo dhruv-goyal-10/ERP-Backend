@@ -17,5 +17,5 @@ urlpatterns = [
     path('studentsubjectattendancelist/<str:studentid>/', StudentSubjectAttendance.as_view(), name='studentsubjectattendance'),
     path('deleteuser/<str:userID>/', DeleteUser.as_view(), name='deleteuser'),
     path('search/', Search.as_view(), name='search'),
-    path('addstudentbulk/',AddStudentBulk.as_view(), name='updatesectionthroughparams'),
+    path('adduserbulk/<str:user>/',AddUserBulk.as_view(), name='updatesectionthroughparams'),
 ]
