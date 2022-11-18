@@ -14,7 +14,7 @@ from . custom_permissions import *
 import re
 from django.shortcuts import get_object_or_404
 from teacher.views import return_user
-from django.contrib.postgres.search import SearchHeadline, SearchQuery
+from django.contrib.postgres.search import SearchHeadline, TrigramWordSimilarity
 
 
 def get_tokens_for_user(user):
@@ -254,15 +254,14 @@ class UpdateSectionView(APIView):
             updates = Update.objects.filter(showto=3) | Update.objects.filter(showto=1)
         else:
             updates = Update.objects.all()
-        SerializerData = []
         search = request.GET.get('search') or ''
         if search :
-            query = SearchQuery(search)
-            filtered = updates.filter(title__search = query) | updates.filter(description__search = query) 
-            serializer = filtered.annotate(titleheadline=SearchHeadline('title', query, start_sel='<span>', stop_sel='</span>', highlight_all=True),
-                                                 descriptionheadline=SearchHeadline('description', query, start_sel='<span>', stop_sel='</span>', highlight_all=True))
-            for ser in serializer:
-                SerializerData += [[ser.titleheadline, ser.descriptionheadline]]
+            SerializerData = []
+            updates = updates.annotate(similarity=TrigramWordSimilarity(search, 'description'),).filter(similarity__gt=0.3).order_by('-similarity')
+            updates = updates.annotate(titleheadline = SearchHeadline('title', search, highlight_all = True), 
+                                       descriptionheadline = SearchHeadline('description', search, highlight_all = True))
+            for update in updates:
+                SerializerData += [[update.titleheadline, update.descriptionheadline]]
         else:
             serializer = UpdateSectionSerializer(updates, many = True)
             SerializerData = [serializer.data]

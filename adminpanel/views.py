@@ -12,6 +12,7 @@ from datetime import date
 from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
 from account.views import checkemail
+from django.contrib.postgres.search import TrigramWordSimilarity
 
 
 # 1- API for adding a Student
@@ -611,11 +612,12 @@ class Search(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get(self, request, search):
-        students = Student.objects.filter(name__icontains=search)
-        teachers = Teacher.objects.filter(name__icontains=search)
-        departments = Department.objects.filter(name__icontains=search)
-        classes = Class.objects.filter(id__icontains=search)
+    def get(self, request):
+        search = request.GET.get('search')
+        students = Student.objects.annotate(similarity=TrigramWordSimilarity(search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
+        teachers = Teacher.objects.annotate(similarity=TrigramWordSimilarity(search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
+        departments = Department.objects.annotate(similarity=TrigramWordSimilarity(search, 'name'),).filter(similarity__gt=0.3).order_by('-similarity')
+        classes = Class.objects.annotate(similarity=TrigramWordSimilarity(search, 'id'),).filter(similarity__gt=0.3).order_by('-similarity')
         dict = {"students":[], "teachers":[], "departments":[], "classes":[]}
         for student in students:
             dict["students"].append(student.name)
