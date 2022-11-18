@@ -14,6 +14,8 @@ from . custom_permissions import *
 import re
 from django.shortcuts import get_object_or_404
 from teacher.views import return_user
+from django.contrib.postgres.search import SearchHeadline, TrigramWordSimilarity
+from django.db.models.functions import Greatest
 
 
 def get_tokens_for_user(user):
@@ -248,15 +250,26 @@ class UpdateSectionView(APIView):
         userID = return_user(request).userID
         who = userID//100000
         if who == 1:
-            updates = Update.objects.filter(showto=3).values(
-            ) | Update.objects.filter(showto=2).values()
+            updates = Update.objects.filter(
+                showto=3) | Update.objects.filter(showto=2)
         elif who == 2:
-            updates = Update.objects.filter(showto=3).values(
-            ) | Update.objects.filter(showto=1).values()
+            updates = Update.objects.filter(
+                showto=3) | Update.objects.filter(showto=1)
         else:
             updates = Update.objects.all()
-        serializer = UpdateSectionSerializer(updates, many=True)
-        SerializerData = [serializer.data]
+        search = request.GET.get('search') or ''
+        if search:
+            SerializerData = []
+            updates = updates.annotate(similarity=Greatest(TrigramWordSimilarity(search, 'description'), TrigramWordSimilarity(
+                search, 'title'))).filter(similarity__gt=0.3).order_by('-similarity')
+            updates = updates.annotate(titleheadline=SearchHeadline('title', search, highlight_all=True),
+                                       descriptionheadline=SearchHeadline('description', search, highlight_all=True))
+            for update in updates:
+                SerializerData += [[update.titleheadline,
+                                    update.descriptionheadline]]
+        else:
+            serializer = UpdateSectionSerializer(updates, many=True)
+            SerializerData = [serializer.data]
         return Response(SerializerData)
 
     def post(self, request, pk):
@@ -279,5 +292,4 @@ class UpdateSectionView(APIView):
         update = get_object_or_404(Update, id=pk)
         update.delete()
         return Response({'msg': 'UPDATE is deleted'},  status=status.HTTP_200_OK)
-
 

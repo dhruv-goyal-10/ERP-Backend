@@ -78,13 +78,6 @@ class SubjectSectionSerializer(ModelSerializer):
         fields = '__all__'
 
 
-# class TeacherSectionSerializer(ModelSerializer):
-
-#     class Meta:
-#         model = Teacher
-#         fields = '__all__'
-
-
 class AssignTimeSerializer(ModelSerializer):
 
     class Meta:
@@ -119,3 +112,15 @@ class AssignsSerializer(serializers.Serializer):
 class TimeSlotSerializer(serializers.Serializer):
     period = serializers.ChoiceField(choices = TIME_SLOTS)
     day = serializers.ChoiceField(choices = DAYS)
+    
+    
+def validate_file_extension(value):
+    import os
+    from django.core.exceptions import ValidationError
+    ext = os.path.splitext(value.name)[1]  # [0] returns path+filename
+    valid_extensions = ['.xlsx', '.xls', '.csv']
+    if not ext.lower() in valid_extensions:
+        raise ValidationError('Unsupported file extension.')
+    
+class TempSerializer(serializers.Serializer):
+    field_name = serializers.FileField(validators=[validate_file_extension]) 
