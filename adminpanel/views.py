@@ -11,10 +11,17 @@ from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
-from account.views import checkemail
+# from account.views import checkemail
 from django.contrib.postgres.search import TrigramWordSimilarity
 import os
 import pandas
+
+def checkemail(email):
+    reg = "^[A-Za-z0-9._%+-]+@gmail\.com$"
+    pat = re.compile(reg)
+    mat = re.search(pat, email)
+    if not mat:
+        return True
 
 
 # 1- API for adding a Student
@@ -30,6 +37,7 @@ class AddStudent(APIView):
         name = serializer.data.get('name')
         DOB = serializer.data.get('DOB')
         classid = serializer.data.get('class_id')
+        print(DOB)
         response = addstudent(email, name, DOB, classid)
         if response == 'DNA':
             return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
@@ -42,6 +50,7 @@ class AddStudent(APIView):
 
 
 def addstudent(email, name, DOB, classid):
+    # print(email)
     if checkemail(email):
         # Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
         return 'DNA'
@@ -646,7 +655,7 @@ class AddUserBulk(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def post(self, request, user):
-        serializer = TempSerializer(data=request.data)
+        serializer = FileSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         file = request.FILES.get('field_name')
         extension = os.path.splitext(file.name)[1]

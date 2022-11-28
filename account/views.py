@@ -16,15 +16,7 @@ from django.shortcuts import get_object_or_404
 from teacher.views import return_user
 from django.contrib.postgres.search import SearchHeadline, TrigramWordSimilarity
 from django.db.models.functions import Greatest
-
-
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    refresh['userID'] = user.userID
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
+from rest_framework.generics import *
 
 
 class UserLoginView(APIView):
@@ -32,19 +24,19 @@ class UserLoginView(APIView):
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        userID = serializer.data.get('userID')
-        password = serializer.data.get('password')
-        user = authenticate(userID=userID, password=password)
-        if user is not None:
-            token = get_tokens_for_user(user)
-            if user.is_stu:
-                return Response({'token': token, 'msg': 'Login Success - Student', "Username": user.name}, status=status.HTTP_200_OK)
-            elif user.is_tea:
-                return Response({'token': token, 'msg': 'Login Success - Teacher', "Username": user.name}, status=status.HTTP_200_OK)
-            elif user.is_admin:
-                return Response({'token': token, 'msg': 'Login Success - Admin', "Username": user.name}, status=status.HTTP_200_OK)
-        else:
-            return Response({'errors': {'non_field_errors': ['UserID or Password is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            data = serializer.save()
+            return Response(data)
+        
+        except ValidationError as e:
+            if  e.code == "invalid":
+                return Response({'Msg' : "Login Unsuccessful" , 
+                                'Error': 'UserID or Password is not Valid'}, 
+                                 status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({'Msg' : "Some error occured from our side. Please try after some time!",
+                                 'Error' : ''},
+                                 status=status.HTTP_404_NOT_FOUND)
 
 
 class SendOTPView(APIView):
@@ -52,194 +44,98 @@ class SendOTPView(APIView):
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.data.get('email')
-        email = email.lower()
         try:
-            user = User.objects.get(email=email)
-        except:
-            return Response({'msg': 'YOU ARE NOT REGISTERED'}, status=status.HTTP_404_NOT_FOUND)
-        otprelation = OTP.objects.get(user=user)
-        try:
-            if otprelation.otp_created_at + timedelta(minutes=1) < timezone.now():
-                EMAIL.send_otp_via_email(email)
-                return Response({'msg': 'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
-            else:
+            serializer.save()
+        except ValidationError as e:
+            
+            if e.code == "wait":
                 return Response({'msg': 'WAIT FOR 1 minute before resending OTP'}, status=status.HTTP_404_NOT_FOUND)
-        except:
-            return Response({'msg': 'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
-
-
-def matchotp(enteredOTP, user):
-    userOTP = OTP.objects.get(user=user)
-    generatedOTP = userOTP.otp
-    generatedTIME = userOTP.otp_created_at
-    expirestatus = userOTP.isexpired
-    if expirestatus is True:
-        return 'expired'
-    if int(enteredOTP) == generatedOTP:
-        if generatedTIME + timedelta(minutes=5) > timezone.now():
-            return 'matched'
-        userOTP.isexpired = True
-        userOTP.save()
-        return 'expired'
-    return 'notmatched'
-
-
-def checkpassword(password, confirmpassword):
-    if password != confirmpassword:
-        return 'different'
-    reg = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$]).{8,}$"
-    pat = re.compile(reg)
-    mat = re.search(pat, password)
-    if not mat:
-        return 'conditions not fulfilled'
-
-
-def checkemail(email):
-    reg = "^[A-Za-z0-9._%+-]+@gmail\.com$"
-    pat = re.compile(reg)
-    mat = re.search(pat, email)
-    if not mat:
-        return True
-
+            elif e.code == "fail":
+                return Response({'msg': 'FAILED! TRY AGAIN'}, status=status.HTTP_404_NOT_FOUND)
+            
+        return Response({'msg': 'OTP SENT! CHECK YOUR MAIL'}, status=status.HTTP_200_OK)
 
 class VerifyOTPView(APIView):
 
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        enteredOTP = serializer.data.get('otp')
-        email = serializer.data.get('email')
-        email = email.lower()
-        user = User.objects.get(email=email)
-        otpstatus = matchotp(enteredOTP, user)
-        if otpstatus == 'matched':
-            return Response({'msg': 'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
-        elif otpstatus == 'notmatched':
-            return Response({'msg': 'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
-        elif otpstatus == 'expired':
-            return Response({'msg': 'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({'msg': 'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            serializer.save()
+        except ValidationError as e:
+            if e.code == "expired":
+                return Response({'msg': 'OTP Expired'}, status=status.HTTP_200_OK)
+            elif e.code == "notmatched":
+                return Response({'msg': "Wrong OTP entered"}, status=status.HTTP_200_OK)
 
+        return Response({'msg': 'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
+    
+class ForgotPasswordView(APIView):
 
-class ChangePasswordView(APIView):
-
-    def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+    def patch(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        enteredOTP = serializer.data.get('otp')
-        email = serializer.data.get('email')
-        password = serializer.data.get('password')
-        confirmpassword = serializer.data.get('confirmpassword')
-
-        email = email.lower()
-        user = User.objects.get(email=email)
-
-        passwordstatus = checkpassword(password, confirmpassword)
-        if passwordstatus == 'conditions not fulfilled':
-            context = {'msg': "Your Password must satisfy given conditions"}
-            return Response(context, status.HTTP_400_BAD_REQUEST)
-        elif passwordstatus == 'different':
-            return Response({'msg': "Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
-
-        otpstatus = matchotp(enteredOTP, user)
-        if otpstatus == 'matched':
-            checkUser = authenticate(userID=user.userID, password=password)
-            if checkUser is not None:
-                context = {'msg': 'Password entered is same as old one'}
-                return Response(context, status.HTTP_400_BAD_REQUEST)
-
-            user.set_password(password)
-            user.save()
-            otprelation = OTP.objects.get(user=user)
-            otprelation.isexpired = True
-            otprelation.save()
+        try:
+            serializer.save()
             return Response({'msg': 'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
-        elif otpstatus == 'expired':
-            return Response({'msg': 'RESET PASSWORD TIMEOUT, GENERATE ANOTHER OTP'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'msg': 'AUTHORISATION FAILED !!'}, status=status.HTTP_400_BAD_REQUEST)
-
-
+        except ValidationError: 
+            return Response({'msg': 'Password entered is same as old one'}, status.HTTP_400_BAD_REQUEST)
+        
 class UpdatePasswordView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def patch(self, request):
         userID = return_user(request).userID
-
-        serializer = UpdatePasswordSerializer(data=request.data)
+        serializer = UpdatePasswordSerializer(data=request.data, context={'userID': userID})
         serializer.is_valid(raise_exception=True)
-        prevpassword = serializer.data.get('prevpassword')
-        newpassword = serializer.data.get('newpassword')
-        confirmpassword = serializer.data.get('confirmpassword')
-        user = User.objects.get(userID=userID)
-
-        check = authenticate(userID=userID, password=prevpassword)
-        if check is None:
-            context = {'msg': "Previous Password is incorrect"}
-            return Response(context, status.HTTP_400_BAD_REQUEST)
-
-        passwordstatus = checkpassword(newpassword, confirmpassword)
-        if passwordstatus == 'conditions not fulfilled':
-            context = {'msg': "Your Password must satisfy given conditions"}
-            return Response(context, status.HTTP_400_BAD_REQUEST)
-        elif passwordstatus == 'different':
-            return Response({'msg': "Password and Confirm Password doesn't match"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if newpassword == prevpassword:
-            context = {'msg': "Your password is same as old one"}
-            return Response(context, status.HTTP_400_BAD_REQUEST)
-
-        user.set_password(newpassword)
-        user.save()
+        serializer.save()
         return Response({'msg': 'Password has been changed Successfuly !!'}, status=status.HTTP_200_OK)
 
 
-class UpdateEmail(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+# class UpdateEmail(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        loginuser = return_user(request)
-        serializer = EmailSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        newemail = serializer.data.get('email')
-        newemail = newemail.lower()
-        user = User.objects.filter(email=newemail)
-        if user.exists():
-            if loginuser.email == newemail:
-                return Response({'msg': 'Previous Email entered'}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({'msg': 'User with this email already existsss'}, status=status.HTTP_400_BAD_REQUEST)
-        elif checkemail(newemail):
-            return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            EMAIL.send_otp_for_email_verification(loginuser, newemail)
-            return Response({'msg': 'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
+#     def post(self, request):
+#         loginuser = return_user(request)
+#         serializer = EmailSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         newemail = serializer.data.get('email')
+#         newemail = newemail.lower()
+#         user = User.objects.filter(email=newemail)
+#         if user.exists():
+#             if loginuser.email == newemail:
+#                 return Response({'msg': 'Previous Email entered'}, status=status.HTTP_400_BAD_REQUEST)
+#             return Response({'msg': 'User with this email already existsss'}, status=status.HTTP_400_BAD_REQUEST)
+#         elif checkemail(newemail):
+#             return Response({'msg': 'Domain not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             EMAIL.send_otp_for_email_verification(loginuser, newemail)
+#             return Response({'msg': 'OTP has been sent successfully to your new Mail'}, status=status.HTTP_200_OK)
 
-    def put(self, request):
-        user = return_user(request)
+#     def put(self, request):
+#         user = return_user(request)
 
-        serializer = VerifyOTPSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        enteredOTP = serializer.data.get('otp')
-        newemail = serializer.data.get('email')
+#         serializer = VerifyOTPSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         enteredOTP = serializer.data.get('otp')
+#         newemail = serializer.data.get('email')
 
-        otpstatus = matchotp(enteredOTP, user)
-        if otpstatus == 'matched':
-            user.email = newemail
-            user.save()
-            otprelation = OTP.objects.get(user=user)
-            otprelation.isexpired = True
-            otprelation.save()
-            return Response({'msg': 'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
-        elif otpstatus == 'notmatched':
-            return Response({'msg': 'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
-        elif otpstatus == 'expired':
-            return Response({'msg': 'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({'msg': 'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
+#         otpstatus = matchotp(enteredOTP, user)
+#         if otpstatus == 'matched':
+#             user.email = newemail
+#             user.save()
+#             otprelation = OTP.objects.get(user=user)
+#             otprelation.isexpired = True
+#             otprelation.save()
+#             return Response({'msg': 'OTP Verification Successful !!'}, status=status.HTTP_200_OK)
+#         elif otpstatus == 'notmatched':
+#             return Response({'msg': 'Wrong OTP Entered'}, status=status.HTTP_404_NOT_FOUND)
+#         elif otpstatus == 'expired':
+#             return Response({'msg': 'OTP Expired'}, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             return Response({'msg': 'Enter a valid OTP'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class UpdateSectionView(APIView):

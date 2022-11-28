@@ -10,8 +10,7 @@ from account.custom_permissions import *
 from django.shortcuts import get_object_or_404
 from datetime import date
 from django.db.utils import IntegrityError
-from .custompaginations import PaginationHandlerMixin
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.generics import *
 
 # This function fetches the user from its Access Token
 
@@ -228,27 +227,19 @@ class TimeTable(APIView):
 class ClassAttendanceObjects(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    
+    serializer_class = ClassAttendanceSerializer
 
     def get(self, request):
         userID = return_user(request).userID
-        allobjects = ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID=userID
-                                                                      )
-
-        list = []
-        for object in allobjects:
-            dict = {"date": object.date,
-                    "time": object.assign.period,
-                    "class_id": object.assign.class_id.id,
-                    "subject_name": object.assign.assign.subject.name,
-                    "subject_code": object.assign.assign.subject.code,
-                    "teacher_userID": object.assign.assign.teacher.userID,
-                    "status": object.status
-                    }
-            list.append(dict)
-        return Response(list, status=status.HTTP_200_OK)
+        allobjects = ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID=userID)
+        try:
+            serializer = self.serializer_class(allobjects, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({"status": "Not a Valid Teacher"}, status=status.HTTP_400_BAD_REQUEST)
 
 # 10- API for taking the attendance of the students of particular ClassAttendance Object
-
 
 class TakeStudentsAttendance(APIView):
     authentication_classes = [JWTAuthentication]
