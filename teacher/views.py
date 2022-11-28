@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from account.serializers import *
+from adminpanel.serializers import *
 from account.models import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +13,8 @@ from datetime import date
 from django.db.utils import IntegrityError
 from .custompaginations import PaginationHandlerMixin
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import *
 
 # This function fetches the user from its Access Token
 
@@ -27,7 +30,6 @@ def return_user(request):
 
 # 1- API for viewing the own profile (Teacher profile)
 class TProfileDetails(APIView):
-
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -120,32 +122,30 @@ class TeacherOfClass(APIView):
 
 # 4- API for getting the list of classes assigned to a particular teacher
 
-class ClassOfTeacher(APIView):
+class ClassOfTeacher(GenericAPIView, ListModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    serializer_class = AssignClassSerializer
+    def get_queryset(self):
+        teacher = get_object_or_404(Teacher, userID = self.kwargs['pk'])
+        return AssignClass.objects.filter(teacher = teacher)
 
-    def get(self, request, teacherid):
-        teacher = get_object_or_404(Teacher, userID=teacherid)
-        assignedclasses = AssignClass.objects.all().filter(teacher=teacher)
-        arr = []
-        for assignedclass in assignedclasses:
-            arr += [assignedclass.class_id.id]
-        arr = set(arr)
-        response = {"classes": arr}
-        return Response(response, status=status.HTTP_200_OK)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+    
 
 # 5- API for getting the list of subjects in a particular department
 
 
-class SubjectsInDepartments(APIView):
+class SubjectsInDepartments(GenericAPIView, ListModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
+    serializer_class = SubjectSerializer
+    def get_queryset(self):
+        return Subject.objects.filter(department__id = self.kwargs['pk'])
 
-    def get(self, request, departmentid):
-        dept = get_object_or_404(Department, id=departmentid)
-        subjects = Subject.objects.filter(department__id=departmentid)
-        serializer = SubjectSectionSerializer(subjects, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 # 6- API for getting the list of teachers in a particular department
 

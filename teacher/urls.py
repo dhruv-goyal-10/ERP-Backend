@@ -15,13 +15,16 @@ urlpatterns = [
     path('teachersofclass/<str:classid>/<str:feedback>/',
          TeacherOfClass.as_view(), name='teacherclassfeedback'),
 
-    path('subjectsindepartment/<str:departmentid>/',
-         SubjectsInDepartments.as_view(), name='subjectdepartmentfilter'),
+    path('subjectsindepartment/<str:pk>/',
+         SubjectsInDepartments.as_view()),
+
     path('teachersindepartment/<str:departmentid>/',
          TeachersInDepartments.as_view(), name='teacherdepartmentfilter'),
     path('studentfeedback/', StudentFeedbackView.as_view(), name='studentfeedback'),
-    path('classofteacher/<str:teacherid>/',
-         ClassOfTeacher.as_view(), name='classofteacherfilter'),
+
+    path('classofteacher/<str:pk>/',
+         ClassOfTeacher.as_view()),
+
     path('timetable/', TimeTable.as_view(), name='TimeTable'),
     path('ClassAttendanceObjects/', ClassAttendanceObjects.as_view(),
          name='ClassAttendanceObjects'),

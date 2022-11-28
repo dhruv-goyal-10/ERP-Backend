@@ -15,6 +15,8 @@ from account.views import checkemail
 from django.contrib.postgres.search import TrigramWordSimilarity
 import os
 import pandas
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import *
 
 
 # 1- API for adding a Student
@@ -157,129 +159,121 @@ def addteacher(email, name, DOB, department):
     # Response({'msg': 'Teacher Created Successfully'}, status=status.HTTP_200_OK)
     return 'TCS'
 
+
 # 3- API for performing CRUD operations on Departments
 
-
-class Departments(APIView):
+class DepartmentsLC(GenericAPIView, ListModelMixin, CreateModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
 
-    def get(self, request, pk):
-        if pk == 'ALL':
-            departments = Department.objects.all()
-            serializer = DepartmentSerializer(departments, many=True)
-        else:
-            departments = get_object_or_404(Department, id=pk)
-            serializer = DepartmentSerializer(departments, many=False)
-        return Response(serializer.data)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
-    def post(self, request, pk):
-        serializer = DepartmentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg': 'Department added successfully'},  status=status.HTTP_200_OK)
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
-    def put(self, request, pk):
-        department = get_object_or_404(Department, id=pk)
-        serializer = DepartmentSerializer(
-            instance=department, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'msg': 'Department modified successfully'},  status=status.HTTP_200_OK)
 
-    def delete(self, request, pk):
-        department = get_object_or_404(Department, id=pk)
-        department.delete()
-        return Response({'msg': 'Department deleted successfully'},  status=status.HTTP_200_OK)
+class DepartmentsRUD(GenericAPIView, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
 
 # 4- API for performing CRUD operations on Classes
 
-
-class ClassObject(APIView):
+class ClassesLC(GenericAPIView, ListModelMixin, CreateModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Class.objects.all()
+    serializer_class = ClassSerializer
 
-    def get(self, request, pk):
-        if pk == 'ALL':
-            allclasses = list(Class.objects.order_by(
-                'year', 'department', 'section'))
-            arr = []
-            for clas in allclasses:
-                arr += [[clas.year, clas.department.name,
-                         clas.department.id, clas.section, clas.id]]
-            return Response(arr, status=status.HTTP_200_OK)
-        else:
-            classes = get_object_or_404(Class, id=pk)
-            serializer = ClassSerializer(classes, many=False)
-            return Response(serializer.data)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
-    def post(self, request, pk):
-        serializer = ClassSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'msg': 'Class added successfully'},  status=status.HTTP_200_OK)
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
-    def put(self, request, pk):
-        clas = get_object_or_404(Class, id=pk)
-        serializer = ClassSerializer(instance=clas, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'msg': 'Class modified successfully'},  status=status.HTTP_200_OK)
 
-    def delete(self, request, pk):
-        clas = get_object_or_404(Class, id=pk)
-        clas.delete()
-        return Response({'msg': 'Class deleted successfully'},  status=status.HTTP_200_OK)
+class ClassesRUD(GenericAPIView, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Class.objects.all()
+    serializer_class = ClassSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
 
 # 5- API for getting classes by their departments
 
-
-class ClassByDepartment(APIView):
+class ClassByDepartment(GenericAPIView, ListModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
+    serializer_class = ClassSerializer
+    def get_queryset(self):
+        return Class.objects.filter(department = self.kwargs['pk'])
 
-    def get(self, request, departmentid):
-        department = get_object_or_404(Department, id=departmentid)
-        allclasses = Class.objects.all().filter(department=department)
-        arr = []
-        for clas in allclasses:
-            arr += [[clas.id, clas.year, clas.section]]
-        return Response(arr,  status=status.HTTP_200_OK)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
 
 # 6- API for performing CRUD operations on Subjects
 
-
-class Subjects(APIView):
+class SubjectsLC(GenericAPIView, ListModelMixin, CreateModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
 
-    def get(self, request, pk):
-        if pk == 'ALL':
-            subject = Subject.objects.all()
-            serializer = SubjectSerializer(subject, many=True)
-        else:
-            subject = get_object_or_404(Subject, code=pk)
-            serializer = SubjectSerializer(subject, many=False)
-        return Response(serializer.data)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
-    def post(self, request, pk):
-        serializer = SubjectSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'msg': 'Subject added successfully'},  status=status.HTTP_200_OK)
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
-    def put(self, request, pk):
-        subject = get_object_or_404(Subject, code=pk)
-        serializer = SubjectSerializer(instance=subject, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'msg': 'Subject modified successfully'},  status=status.HTTP_200_OK)
 
-    def delete(self, request, pk):
-        subject = get_object_or_404(Subject, code=pk)
-        subject.delete()
-        return Response({'msg': 'Subject deleted successfully'},  status=status.HTTP_200_OK)
+class SubjectsRUD(GenericAPIView, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
 
 # 7- API for viewing Feedbacks
 
