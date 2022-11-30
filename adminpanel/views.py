@@ -6,7 +6,6 @@ from account.models import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from account.emails import *
-from .serializers import *
 from account.custom_permissions import *
 from datetime import date
 from django.shortcuts import get_object_or_404
@@ -15,8 +14,7 @@ from account.views import checkemail
 from django.contrib.postgres.search import TrigramWordSimilarity
 import os
 import pandas
-from rest_framework.generics import GenericAPIView
-from rest_framework.mixins import *
+from rest_framework.generics import *
 
 
 # 1- API for adding a Student
@@ -162,117 +160,61 @@ def addteacher(email, name, DOB, department):
 
 # 3- API for performing CRUD operations on Departments
 
-class DepartmentsLC(GenericAPIView, ListModelMixin, CreateModelMixin):
+class DepartmentsLC(ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
-
-class DepartmentsRUD(GenericAPIView, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+class DepartmentsRUD(RetrieveUpdateDestroyAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
 
 
 # 4- API for performing CRUD operations on Classes
 
-class ClassesLC(GenericAPIView, ListModelMixin, CreateModelMixin):
+class ClassesLC(ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
-
-class ClassesRUD(GenericAPIView, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+class ClassesRUD(RetrieveUpdateDestroyAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
 
 
 # 5- API for getting classes by their departments
 
-class ClassByDepartment(GenericAPIView, ListModelMixin):
+class ClassByDepartment(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     serializer_class = ClassSerializer
+
     def get_queryset(self):
         return Class.objects.filter(department = self.kwargs['pk'])
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
 
 # 6- API for performing CRUD operations on Subjects
 
-class SubjectsLC(GenericAPIView, ListModelMixin, CreateModelMixin):
+class SubjectsLC(ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
-
-class SubjectsRUD(GenericAPIView, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+class SubjectsRUD(RetrieveUpdateDestroyAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
 
 
 # 7- API for viewing Feedbacks

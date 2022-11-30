@@ -8,39 +8,24 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from teacher.views import return_user
 from datetime import date
+from rest_framework.generics import *
 
 # 1- API for viewing the own profile (student profile)
 
-
-class SProfileDetails(APIView):
+class SProfileDetails(RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentProfileSerializer
 
-    def get(self, request):
-        user = return_user(request)
-        student = get_object_or_404(Student, user=user)
-        serializer = StudentProfileSerializer(student, many=False)
-        eserializer = EmailSerializer(user, many=False)
-        return Response(serializer.data | eserializer.data)
-
-    def put(self, request):
-        user = return_user(request)
-        student = get_object_or_404(Student, user=user)
-        serializer = StudentProfileSerializer(student, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        # Updating the name in User Model
-        name = serializer.validated_data.get('name')
-        user.name = name
-        user.save()
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    def get_object(self):
+        return get_object_or_404(Student, user = return_user(self.request))
 
 # 2- API for giving feedback to the teacher
-
 
 class TeacherFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = FeedbackSerializer
 
     def put(self, request):
         user = return_user(request)
@@ -139,26 +124,15 @@ class StudentOverallAttendance(APIView):
 # 5- API for fetching attendance of a particular subject of a student
 
 
-class StudentSubjectAttendance(APIView):
+class StudentSubjectAttendance(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = StudentSubjectAttendance
 
-    def get(self, request, subject_code, month):
-        user = return_user(request)
-        student = get_object_or_404(Student, user=user)
-        attendances = StudentAttendance.objects.filter(subject__code=subject_code,
-                                                       student=student,
-                                                       classattendance__date__month=month,
-                                                       classattendance__date__year=date.today().year,
-                                                       classattendance__status=True)
-        list = []
-        for attendance in attendances:
-            dict = {}
-            dict = {
-                "date": attendance.classattendance.date,
-                "day": attendance.classattendance.assign.day,
-                "period": attendance.classattendance.assign.period,
-                "is_present": attendance.is_present
-            }
-            list.append(dict)
-        return Response(list, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        student = get_object_or_404(Student, user=return_user(self.request))
+        return StudentAttendance.objects.filter(subject__code=self.kwargs['subject_code'],
+                                                student=student,
+                                                classattendance__date__month=self.kwargs['month'],
+                                                classattendance__date__year=date.today().year,
+                                                classattendance__status=True)

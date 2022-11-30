@@ -53,14 +53,14 @@ class UpdatePasswordSerializer(serializers.Serializer):
 class StudentProfileSerializer(ModelSerializer):
     class Meta:
         model = Student
-        fields = ['name', 'sex', 'DOB', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state',
+        fields = ['sex', 'DOB', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state',
                   'student_phone', 'father_name', 'father_phone', 'mother_name', 'mother_phone', ]
 
 
 class TeacherProfileSerializer(ModelSerializer):
     class Meta:
         model = Teacher
-        fields = ['name', 'sex', 'DOB', 'picture', 'blood_group',
+        fields = ['sex', 'DOB', 'picture', 'blood_group',
                   'pincode', 'address', 'city', 'state', 'teacher_phone']
 
 
@@ -68,13 +68,6 @@ class UpdateSectionSerializer(ModelSerializer):
 
     class Meta:
         model = Update
-        fields = '__all__'
-
-
-class SubjectSectionSerializer(ModelSerializer):
-
-    class Meta:
-        model = Subject
         fields = '__all__'
 
 
@@ -126,3 +119,68 @@ def validate_file_extension(value):
 
 class TempSerializer(serializers.Serializer):
     field_name = serializers.FileField(validators=[validate_file_extension])
+
+
+class DepartmentSerializer(ModelSerializer):
+
+    class Meta:
+        model = Department
+        fields = '__all__'
+
+
+class ClassSerializer(ModelSerializer):
+    class Meta:
+        model = Class
+        fields = '__all__'
+
+
+class SubjectSerializer(ModelSerializer):
+    class Meta:
+        model = Subject
+        fields = '__all__'
+
+
+class StudentSubjectAttendance(ModelSerializer):
+    date = serializers.DateField(source='classattendance.date')
+    day = serializers.CharField(source='classattendance.assign.day')
+    period = serializers.CharField(source='classattendance.assign.period')
+
+    class Meta:
+        model = StudentAttendance
+        fields = ['date', 'day', 'period', 'is_present']
+
+
+class FeedbackSerializer(ModelSerializer):
+    class Meta:
+        model = TeacherFeedback
+        fields = '__all__'
+
+
+class TeacherList(ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['userID', 'name']
+
+
+class StudentList(ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['userID', 'name']
+
+
+class StudentFeedbackSerializer(ModelSerializer):
+    studentname = serializers.CharField(source = 'student.name')
+    class Meta:
+        model = StudentFeedback
+        fields = ['studentname', 'feed']
+
+
+class AttendanceObjectsSerializer(ModelSerializer):
+    period = serializers.CharField(source = 'assign.period')
+    class_id = serializers.CharField(source = 'assign.class_id.id')
+    subject_name = serializers.CharField(source = 'assign.assign.subject.name')
+    subject_code = serializers.CharField(source = 'assign.assign.subject.code')
+    teacher_userID = serializers.CharField(source = 'assign.assign.teacher.userID')
+    class Meta:
+        model = ClassAttendance
+        fields = ['date', 'period', 'class_id', 'subject_name', 'subject_code', 'teacher_userID', 'status']

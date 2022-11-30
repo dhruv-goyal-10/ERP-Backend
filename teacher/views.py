@@ -2,7 +2,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from account.serializers import *
-from adminpanel.serializers import *
 from account.models import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -13,11 +12,11 @@ from datetime import date
 from django.db.utils import IntegrityError
 from .custompaginations import PaginationHandlerMixin
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.generics import GenericAPIView
-from rest_framework.mixins import *
+from rest_framework.generics import *
+from rest_framework.mixins import ListModelMixin
+
 
 # This function fetches the user from its Access Token
-
 
 def return_user(request):
     token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
@@ -29,61 +28,35 @@ def return_user(request):
 
 
 # 1- API for viewing the own profile (Teacher profile)
-class TProfileDetails(APIView):
+
+class TProfileDetails(RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = TeacherProfileSerializer
 
-    def get(self, request):
-        user = return_user(request)
-        teacher = get_object_or_404(Teacher, user=user)
-        serializer = TeacherProfileSerializer(teacher, many=False)
-        eserializer = EmailSerializer(user, many=False)
-        return Response(serializer.data | eserializer.data)
+    def get_object(self):
+        return get_object_or_404(Teacher, user=return_user(self.request))
 
-    def put(self, request):
-        user = return_user(request)
-        teacher = get_object_or_404(Teacher, user=user)
-        serializer = TeacherProfileSerializer(teacher, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        # Updating the name in User Model
-        name = serializer.validated_data.get('name')
-        user.name = name
-        user.save()
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 # 2- API for getting the list of students in a particular class
 
-
-class StudentInClass(APIView):
+class StudentInClass(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    serializer_class = StudentList
 
-    def get(self, request, classid, feedback='defaultvalue'):
-        user = return_user(request)
-        clas = get_object_or_404(Class, id=classid)
-        classdetails = {'department': clas.department.name,
-                        'year': clas.year, 'section': clas.section}
-        students = Student.objects.all()
-        if feedback == 'feedback':
-            teacher = get_object_or_404(Teacher, user=user)
-        feedbacks = {}
-        dict = {}
-        for student in students:
-            if (student.class_id.id) == classid:
-                dict[student.userID] = student.name
-            if feedback == 'feedback':
-                feed = StudentFeedback.objects.filter(
-                    teacher=teacher, student=student)
-                if feed.exists():
-                    feed = feed[0]
-                    feedbacks[feed.student.userID] = {
-                        feed.student.name: feed.feed}
-        if feedback == 'feedback':
-            response = {"feeds": feedbacks}
-        else:
-            response = {"classdetails": classdetails, "students": dict}
-        return Response(response, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        return Student.objects.filter(class_id__id = self.kwargs['classid'])
+
+
+class StudentInClassFeedback(ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    serializer_class = StudentFeedbackSerializer
+
+    def get_queryset(self):
+        teacher = get_object_or_404(Teacher, user=return_user(self.request))
+        return StudentFeedback.objects.filter(teacher=teacher, student__class_id__id = self.kwargs['classid'])
 
 
 # 3- API for getting the list of teachers assigned to a  particular class
@@ -122,52 +95,39 @@ class TeacherOfClass(APIView):
 
 # 4- API for getting the list of classes assigned to a particular teacher
 
-class ClassOfTeacher(GenericAPIView, ListModelMixin):
+class ClassOfTeacher(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
     serializer_class = AssignClassSerializer
-    def get_queryset(self):
-        teacher = get_object_or_404(Teacher, userID = self.kwargs['pk'])
-        return AssignClass.objects.filter(teacher = teacher)
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-    
+    def get_queryset(self):
+        teacher = get_object_or_404(Teacher, userID=self.kwargs['pk'])
+        return AssignClass.objects.filter(teacher=teacher)
+
 
 # 5- API for getting the list of subjects in a particular department
 
-
-class SubjectsInDepartments(GenericAPIView, ListModelMixin):
+class SubjectsInDepartments(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsAdmin]
     serializer_class = SubjectSerializer
-    def get_queryset(self):
-        return Subject.objects.filter(department__id = self.kwargs['pk'])
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+    def get_queryset(self):
+        return Subject.objects.filter(department__id=self.kwargs['departmentid'])
+
 
 # 6- API for getting the list of teachers in a particular department
 
-
-class TeachersInDepartments(APIView):
+class TeachersInDepartments(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    serializer_class = TeacherList
 
-    def get(self, request, departmentid):
-        dept = get_object_or_404(Department, id=departmentid)
-        teachers = Teacher.objects.filter(department__id=departmentid)
-        departmentdet = dict()
-        departmentdet["department details"] = {dept.id: dept.name}
-        response = {}
-        if teachers.exists():
-            for teacher in teachers:
-                response[teacher.userID] = teacher.name
-        response = {'teachers': response}
-        return Response(departmentdet | response, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        return Teacher.objects.filter(department__id=self.kwargs['departmentid'])
+
 
 # 7- API for giving feedback to a particular student
-
 
 class StudentFeedbackView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -195,8 +155,8 @@ TIME_SLOTS = ['8:30 - 9:20', '9:20 - 10:10',
               '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-# 8- API for viewing TimeTable (Teacher side)
 
+# 8- API for viewing TimeTable (Teacher side)
 
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]
@@ -222,33 +182,19 @@ class TimeTable(APIView):
                 list.append(dict)
         return Response(list,  status=status.HTTP_200_OK)
 
+
 # 9- API for getting the list of all the schedules of assigned classes with their attendance status
 
-
-class ClassAttendanceObjects(APIView):
+class ClassAttendanceObjects(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    serializer_class = AttendanceObjectsSerializer
 
-    def get(self, request):
-        userID = return_user(request).userID
-        allobjects = ClassAttendance.objects.order_by('-date').filter(assign__assign__teacher__userID=userID
-                                                                      )
-
-        list = []
-        for object in allobjects:
-            dict = {"date": object.date,
-                    "time": object.assign.period,
-                    "class_id": object.assign.class_id.id,
-                    "subject_name": object.assign.assign.subject.name,
-                    "subject_code": object.assign.assign.subject.code,
-                    "teacher_userID": object.assign.assign.teacher.userID,
-                    "status": object.status
-                    }
-            list.append(dict)
-        return Response(list, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        return ClassAttendance.objects.order_by('-date').filter(
+            assign__assign__teacher__userID=return_user(self.request).userID)
 
 # 10- API for taking the attendance of the students of particular ClassAttendance Object
-
 
 class TakeStudentsAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -283,8 +229,8 @@ class TakeStudentsAttendance(APIView):
             classatt.save()
         return Response({"msg": "Class Attendance Updated Successfully"}, status=status.HTTP_200_OK)
 
-# 11- API for creating only today's ClassAttendance Objects for all the classes assigned to the teacher
 
+# 11- API for creating only today's ClassAttendance Objects for all the classes assigned to the teacher
 
 class CreateTodayAttendance(APIView):
     authentication_classes = [JWTAuthentication]
@@ -315,6 +261,7 @@ class CreateTodayAttendance(APIView):
                     continue
 
         return Response({'msg': 'Attendance Objects added successfully'},  status=status.HTTP_200_OK)
+
 
 # ClassAttendanceObjects API (with Pagination)
 
