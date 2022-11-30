@@ -10,7 +10,8 @@ from . models import *
 class EMAIL:
     @staticmethod
     def send_otp_via_email(mailaddress):
-        otp = random.randint(1000, 9999)
+        otp = 9999
+        # otp = random.randint(1000, 9999)
         user = User.objects.get(email=mailaddress)
         username = user.name
 

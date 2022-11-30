@@ -13,7 +13,6 @@ from django.db.utils import IntegrityError
 from .custompaginations import PaginationHandlerMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import *
-from rest_framework.mixins import ListModelMixin
 
 
 # This function fetches the user from its Access Token

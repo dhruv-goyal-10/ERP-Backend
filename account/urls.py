@@ -10,9 +10,9 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),
     path('sendotp/', SendOTPView.as_view(), name='sendotp'),
     path('verifyotp/', VerifyOTPView.as_view(), name='verifyotp'),
-    path('changepassword/', ChangePasswordView.as_view(), name='changepassword'),
+    path('changepassword/', ForgotPasswordView.as_view(), name='changepassword'),
     path('updatepassword/', UpdatePasswordView.as_view(), name='updatepassword'),
-    path('updateemail/', UpdateEmail.as_view(), name='updateemail'),
+    # path('updateemail/', UpdateEmail.as_view(), name='updateemail'),
     path('updatesection/<int:pk>/', UpdateSectionView.as_view(),
          name='updatesectionthroughparams'),
 ]
