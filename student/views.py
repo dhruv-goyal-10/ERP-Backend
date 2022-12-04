@@ -1,7 +1,8 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from account.serializers import *
+# from account.serializers import *
+from .serializers import *
 from account.models import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -22,27 +23,11 @@ class SProfileDetails(RetrieveUpdateAPIView):
 
 # 2- API for giving feedback to the teacher
 
-class TeacherFeedbackView(APIView):
+class TeacherFeedbackView(CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = FeedbackSerializer
-
-    def put(self, request):
-        user = return_user(request)
-        student = get_object_or_404(Student, user=user)
-        feedbacks = request.data
-        for feedback in feedbacks:
-            teacher = get_object_or_404(Teacher, userID=feedback["userID"])
-            thisfeedback = TeacherFeedback.objects.filter(
-                teacher=teacher, student=student)
-            if thisfeedback.exists():
-                thisfeedback = thisfeedback[0]
-                thisfeedback.feed = feedback["feed"]
-                thisfeedback.save()
-            else:
-                TeacherFeedback(teacher=teacher, student=student,
-                                feed=feedback["feed"]).save()
-        return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
+    serializer_class = TeacherFeedbackListSerializer
+    queryset = None
 
 
 TIME_SLOTS = ['8:30 - 9:20', '9:20 - 10:10',

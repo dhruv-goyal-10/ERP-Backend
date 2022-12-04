@@ -60,36 +60,23 @@ class StudentInClassFeedback(ListAPIView):
 
 # 3- API for getting the list of teachers assigned to a  particular class
 
-class TeacherOfClass(APIView):
+class TeacherOfClass(ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = TeacherList
 
-    def get(self, request, classid, feedback='defaultvalue'):
-        user = return_user(request)
-        clas = get_object_or_404(Class, id=classid)
-        classdetails = {'department': clas.department.name,
-                        'year': clas.year, 'section': clas.section}
-        assignedclasses = AssignClass.objects.all().filter(class_id=classid)
-        if feedback == 'feedback':
-            student = get_object_or_404(Student, user=user)
-            print('student')
-        feedbacks = {}
-        arr = []
-        for assignedclass in assignedclasses:
-            arr += [assignedclass.teacher.name]
-            if feedback == 'feedback':
-                feed = TeacherFeedback.objects.filter(
-                    student=student, teacher=assignedclass.teacher)
-                if feed.exists():
-                    feed = feed[0]
-                    feedbacks[feed.teacher.userID] = {
-                        feed.teacher.name: feed.feed}
-        if feedback == 'feedback':
-            response = {"feeds": feedbacks}
-        else:
-            arr = set(arr)
-            response = {"classdetails": classdetails, "teachers": arr}
-        return Response(response, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        return Teacher.objects.filter(assignclass_teacher__class_id = self.kwargs['classid'])
+
+
+class TeacherOfClassFeedback(ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = TeacherFeedbackSerializer
+
+    def get_queryset(self):
+        student = get_object_or_404(Student, user=return_user(self.request))
+        return TeacherFeedback.objects.filter(student=student, teacher__assignclass_teacher__class_id = self.kwargs['classid'])
 
 
 # 4- API for getting the list of classes assigned to a particular teacher
@@ -128,34 +115,18 @@ class TeachersInDepartments(ListAPIView):
 
 # 7- API for giving feedback to a particular student
 
-class StudentFeedbackView(APIView):
+class StudentFeedbackView(CreateAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def put(self, request):
-        user = return_user(request)
-        teacher = get_object_or_404(Teacher, user=user)
-        feedbacks = request.data
-        for feedback in feedbacks:
-            student = get_object_or_404(Student, userID=feedback["userID"])
-            thisfeedback = StudentFeedback.objects.filter(
-                teacher=teacher, student=student)
-            if thisfeedback.exists():
-                thisfeedback = thisfeedback[0]
-                thisfeedback.feed = feedback["feed"]
-                thisfeedback.save()
-            else:
-                StudentFeedback(teacher=teacher, student=student,
-                                feed=feedback["feed"]).save()
-        return Response({'msg': 'Feedback Submitted Successfully !!'}, status=status.HTTP_200_OK)
-
-
-TIME_SLOTS = ['8:30 - 9:20', '9:20 - 10:10',
-              '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
-DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    permission_classes = [IsAuthenticated, IsTeacherorIsAdmin]
+    serializer_class = StudentFeedbackListSerializer
+    queryset = None
 
 
 # 8- API for viewing TimeTable (Teacher side)
+
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+TIME_SLOTS = ['8:30 - 9:20', '9:20 - 10:10',
+              '11:00 - 11:50', '11:50 - 12:40', '1:30 - 2:20']
 
 class TimeTable(APIView):
     authentication_classes = [JWTAuthentication]

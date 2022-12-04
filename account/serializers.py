@@ -8,6 +8,15 @@ from .emails import *
 from rest_framework_simplejwt.tokens import RefreshToken
 import os
 from django.core.exceptions import ValidationError
+import jwt
+
+def return_user(request):
+    token = request.META.get('HTTP_AUTHORIZATION', " ").split(' ')[1]
+    tokenset = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+    userID = tokenset['userID']
+    user = User.objects.filter(userID=userID)
+    if user.exists():
+        return user[0]
 
 
 def get_tokens_for_user(user):
@@ -244,15 +253,6 @@ class AddTeacherSerializer(ModelSerializer):
         fields = ['name', 'department', 'email', 'DOB']
 
 
-
-
-class StudentProfileSerializer(ModelSerializer):
-    class Meta:
-        model = Student
-        fields = ['sex', 'DOB', 'picture', 'blood_group', 'pincode', 'address', 'city', 'state',
-                  'student_phone', 'father_name', 'father_phone', 'mother_name', 'mother_phone', ]
-
-
 class TeacherProfileSerializer(ModelSerializer):
     class Meta:
         model = Teacher
@@ -352,20 +352,35 @@ class SubjectSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class StudentSubjectAttendance(ModelSerializer):
-    date = serializers.DateField(source='classattendance.date')
-    day = serializers.CharField(source='classattendance.assign.day')
-    period = serializers.CharField(source='classattendance.assign.period')
-
-    class Meta:
-        model = StudentAttendance
-        fields = ['date', 'day', 'period', 'is_present']
-
-
-class FeedbackSerializer(ModelSerializer):
+class TeacherFeedbackSerializer(ModelSerializer):
+    teachername = serializers.CharField(source = 'teacher.name')
     class Meta:
         model = TeacherFeedback
-        fields = '__all__'
+        fields = ['teachername', 'feed']
+
+
+class StudentFeedbackInstanceSerializer(ModelSerializer):
+    userID = serializers.IntegerField(source = 'student.userID')
+    class Meta:
+        model = StudentFeedback
+        fields = ['userID', 'feed']
+
+class StudentFeedbackListSerializer(serializers.ListSerializer):
+    child = StudentFeedbackInstanceSerializer()
+
+    def create(self, validated_data):
+        teacher = get_object_or_404(Teacher, user = return_user(self.context.get('request'))) 
+        queryset = StudentFeedback.objects.filter(teacher = teacher)
+        response = []
+        for data in validated_data:
+            data['student'] = get_object_or_404(Student, userID = data['student']['userID'])
+            data['teacher'] = teacher
+            feedback = queryset.filter(student = data['student'])
+            if feedback.exists():
+                response.append(self.child.update(feedback[0], data))
+            else:
+                response.append(self.child.create(data))
+        return response
 
 
 class TeacherList(ModelSerializer):

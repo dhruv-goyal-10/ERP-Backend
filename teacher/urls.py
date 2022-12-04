@@ -6,7 +6,7 @@ urlpatterns = [
     path('studentinclass/<str:classid>/', StudentInClass.as_view()),
     path('studentinclassfeedback/<str:classid>/', StudentInClassFeedback.as_view()),
     path('teachersofclass/<str:classid>/', TeacherOfClass.as_view()),
-    path('teachersofclass/<str:classid>/<str:feedback>/', TeacherOfClass.as_view()),
+    path('teachersofclassfeedback/<str:classid>/', TeacherOfClassFeedback.as_view()),
     path('subjectsindepartment/<str:departmentid>/', SubjectsInDepartments.as_view()),
     path('teachersindepartment/<str:departmentid>/', TeachersInDepartments.as_view()),
     path('studentfeedback/', StudentFeedbackView.as_view()),
