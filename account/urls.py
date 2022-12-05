@@ -15,5 +15,4 @@ urlpatterns = [
     # path('updateemail/', UpdateEmail.as_view(), name='updateemail'),
     path('updatesection/<int:pk>/', UpdateSectionView.as_view(),
          name='updatesectionthroughparams'),
-    path('', test, name='test')
 ]

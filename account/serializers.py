@@ -5,6 +5,7 @@ import re
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from .emails import *
+from ERP_backend import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 import os
 from django.core.exceptions import ValidationError
