@@ -24,35 +24,33 @@
 
 # <p align = "center">Admin Section </p>
 
-### <p align = "center">1. Dashboard. </p>
+### <p align = "center">1. Dashboard </p>
 ![image](project_images/admin/dash.jpg)
 ###
 
-### <p align = "center">2. List of all students with filtering options. </p>
+### <p align = "center">2. List of students with filtering options </p>
 ![image](project_images/admin/student_list.jpg)
 ###
 
-### <p align = "center">3. Add a Student. </p>
+### <p align = "center">3. Add Students & Faculties </p>
 ![image](project_images/admin/student_add.jpg)
-###
-
-### <p align = "center">4. Add a Faculty. </p>
 ![image](project_images/admin/faculty_add.jpg)
 ###
 
-### <p align = "center">5. Monitor Feedbacks. </p>
+### <p align = "center">4. Monitor Feedbacks </p>
 ![image](project_images/admin/feedback.jpg)
 ###
 
-### <p align = "center">6. Monitor & Update upcoming events. </p>
+### <p align = "center">5. Monitor & Update upcoming events </p>
 ![image](project_images/admin/events.jpg)
 ###
 
-### <p align = "center">7. Update Departments & Classes. </p>
+### <p align = "center">6. Update Departments & Classes </p>
 ![image](project_images/admin/departments.jpg)
+![image](project_images/admin/classes.jpg)
 ###
 
-### <p align = "center">8. Schedule Classes. </p>
+### <p align = "center">7. Schedule Classes </p>
 ![image](project_images/admin/time_table.jpg)
 ###
 
